@@ -53,6 +53,9 @@ body{
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
 .logo{width:52px;height:52px;background:var(--red);border:var(--line);box-shadow:var(--shadow-sm);display:grid;place-items:center;
   color:#fff;font-family:var(--font-disp);font-size:30px;line-height:1;transform:rotate(-6deg);flex:none}
+button.logo{padding:0;cursor:pointer}
+button.logo:hover{background:var(--yellow);color:#0d0d0f}
+button.logo:active{transform:rotate(-6deg) translate(4px,4px);box-shadow:0 0 0 var(--ink)}
 .brand h1{margin:0;font-family:var(--font-disp);font-size:38px;letter-spacing:2px;line-height:1;text-transform:uppercase;
   -webkit-text-stroke:1.5px var(--ink)}
 .brand h1 em{font-style:normal;color:var(--red);background:var(--ink);padding:0 6px;-webkit-text-stroke:0}
@@ -66,7 +69,7 @@ body{
 .ghost:hover,.iconbtn:hover,.back:hover{background:var(--yellow);color:#0d0d0f}
 .ghost:active,.iconbtn:active,.back:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
 .card{background:var(--white);border:var(--line);box-shadow:var(--shadow);padding:16px;margin-bottom:18px}
-.ribbon{display:inline-block;background:var(--ink);color:var(--white);font-family:var(--font-disp);font-size:17px;letter-spacing:2px;
+.ribbon{display:inline-block;background:var(--ink);color:var(--white);font-family:var(--font-body);font-weight:800;font-size:16px;letter-spacing:1.5px;
   padding:4px 12px;transform:skewX(-10deg);margin-bottom:12px}
 .ribbon>span{display:inline-block;transform:skewX(10deg)}
 .ribbon.red{background:var(--red);color:#fff}
@@ -210,7 +213,15 @@ body{
 .group+.group{margin-top:14px}
 .group h4{margin:0 0 8px;font-family:var(--font-disp);font-size:15px;letter-spacing:2px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:10px}
-.abtn{border:var(--line);background:var(--paper);color:var(--ink);box-shadow:var(--shadow-sm);padding:10px;text-align:left;cursor:pointer;min-height:64px;font:inherit}
+.abtn{border:var(--line);border-left-width:9px;background:var(--paper);color:var(--ink);box-shadow:var(--shadow-sm);padding:10px;text-align:left;cursor:pointer;min-height:64px;font:inherit}
+/* 招式的类型色条：和出招表同色系，只画一条窄边，保持按钮本身干净 */
+.abtn.kind-blade{border-left-color:#e2001a}
+.abtn.kind-qi{border-left-color:#007d99}
+.abtn.kind-special{border-left-color:#7c3aed}
+.abtn.kind-unblock{border-left-color:#0d0d0f}
+.abtn.kind-gain-a{border-left-color:#f4a3ab}
+.abtn.kind-gain-b{border-left-color:#a8d8ef}
+.abtn.kind-guard{border-left-color:#12a150}
 .abtn:hover{background:var(--yellow);color:#0d0d0f}
 .abtn:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
 .abtn b{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;font-size:14.5px}
@@ -416,12 +427,13 @@ body.shake #app{animation:shake .5s ease}
   .log ol{max-height:190px}
 
   /* 手机底部悬浮快捷条：4 个积攒按钮做大，拇指区随手就能点 */
-  .quickbar{display:grid;position:fixed;left:0;right:0;bottom:0;z-index:20;grid-template-columns:repeat(5,1fr);gap:6px;
+  .quickbar{display:grid;position:fixed;left:0;right:0;bottom:0;z-index:20;grid-template-columns:repeat(5,1fr);gap:5px;
     padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:var(--white);border-top:4px solid var(--ink);
     box-shadow:0 -6px 0 rgba(13,13,15,.12)}
   .quickbar button{border:var(--line);background:var(--paper);color:var(--ink);font-weight:800;font-size:13px;min-height:60px;
     box-shadow:3px 3px 0 var(--ink);cursor:pointer;display:grid;place-items:center;line-height:1.15}
   .quickbar button b{font-family:var(--font-body);font-weight:800;font-size:15px;letter-spacing:0;display:block}
+  .quickbar button.more b{font-size:11px;line-height:1.2;letter-spacing:-.2px;white-space:nowrap}
   .quickbar button small{font-size:10.5px;color:var(--muted);font-weight:700}
   .quickbar button.more{background:var(--red);color:#fff}
   .quickbar button.more small{color:#ffd9dc}
@@ -1509,6 +1521,18 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     const note = B.ATK[i] === 3 ? `<i class="tpnote">只能用「圣盾阵」防御</i>` : "";
     return fxChip(id) + note;
   }
+  /** 给对战按钮配色条（和出招表同色系，但只用一条窄边，不抢按钮本身） */
+  function kindClass(id) {
+    const i = B.ACT[id], t = B.ATK[i];
+    if (t === 1) return "kind-blade";
+    if (t === 2) return "kind-qi";
+    if (t === 3) return "kind-special";
+    if (t === 4) return "kind-unblock";
+    if (B.GAIN[i][0] || B.GAIN[i][2]) return "kind-gain-a";   // 钢铁 / 盾 → 浅红
+    if (B.GAIN[i][1] || B.GAIN[i][3]) return "kind-gain-b";   // 聚气 / 屏 → 浅蓝
+    if (B.DEF_ALL[i] || B.DEF_B[i] || B.DEF_Q[i]) return "kind-guard";
+    return "";
+  }
 
   /* Boss 形态 → 实际生效的 Boss 配置 id（ChatGPT「认真」= 星体咏唱版） */
   function bossEffectiveId(baseId, serious) {
@@ -1600,7 +1624,9 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     o = o || {};
     const left = o.back
       ? `<button class="back" data-act="${o.back}" aria-label="返回">${chevSvg()}</button>`
-      : `<span class="logo" aria-hidden="true">波</span>`;
+      : (o.logoAct
+        ? `<button class="logo" data-act="${o.logoAct}" aria-label="返回主页">波</button>`
+        : `<span class="logo" aria-hidden="true">波</span>`);
     return `<header class="topbar">
       <div class="brand${o.sm ? " sm" : ""}">${left}
         <div><h1>${o.title}</h1>${o.sub ? `<p>${o.sub}</p>` : ""}</div>
@@ -1631,9 +1657,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     return `<div class="screen">
       ${topbar({
       title: "波波<em>攒</em>",
-      sub: "同时出招 · 攒资源 · 攻防一体",
-      right: `<button class="ghost" data-act="help">玩法说明</button>
-              <button class="ghost" data-act="training">AI 数据</button>`,
+      right: `<button class="ghost" data-act="help">玩法说明</button>`,
     })}
       <div class="modes">
         <button class="mode" data-act="setup:normal">
@@ -1648,13 +1672,11 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
         </button>
       </div>
 
-      <div class="row" style="margin:2px 0 18px">
-        <button class="cta" data-act="setup:normal">开始对战</button>
-        <button class="ghost" data-act="help">完整玩法说明</button>
-      </div>
-
       ${moveTable()}
-      ${paceCard()}
+
+      <div class="row" style="margin:2px 0 18px">
+        <button class="cta" data-act="help">完整玩法说明</button>
+      </div>
 
       <footer class="foot">
         波波攒 V 0.1 测试版 | 作者：B站@${extLink(AUTHOR_NAME, AUTHOR_URL, true)}<br>
@@ -1776,7 +1798,6 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
             <div class="divider"></div>
             <div class="ribbon"><span>特殊技能</span></div>
             <ul class="skills" style="margin:0">${names.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>
-            <p class="muted" style="margin:0">技能效果就不在这里解释了 —— 到对局里自己试出来吧。</p>
             <div class="divider"></div>
             <div class="row" style="margin-top:auto">
               <button class="cta" data-act="start">挑战${serious ? "认真" : "通常"}形态</button>
@@ -1866,7 +1887,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       const i = B.ACT[id];
       const ok = !!legal[i];
       const cost = costText(id);
-      return `<button class="abtn" data-act="play:${id}" ${ok ? "" : "disabled"}>
+          return `<button class="abtn ${kindClass(id)}" data-act="play:${id}" ${ok ? "" : "disabled"}>
               <b><span>${esc(B.ACTION_CN[id])}</span><em>${esc(cost || "免费")}</em></b>
               <small>${fxChip(id)}</small>
             </button>`;
@@ -1889,7 +1910,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       return `<button data-act="play:${id}" ${legal[i] ? "" : "disabled"}>
         <b>${esc(B.ACTION_CN[id])}</b><small>+1 ${esc(resShort(r))}</small>
       </button>`;
-    }).join("")}<button class="more" data-act="scrollactions"><b>更多</b><small>全部动作</small></button></div>`;
+    }).join("")}<button class="more" data-act="scrollactions"><b>点此或下拉</b><small>选择攻击</small></button></div>`;
   }
   // 悬浮快捷条要放在 .screen 之外：.screen 的入场动画带 transform，
   // fixed 元素一旦落在被 transform 的容器里就会退化成相对定位（手机上会闪一下位置）
@@ -1905,6 +1926,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       title: "对战中",
       sub: esc(st.sides[1].name) + " · " + esc(sub),
       sm: true,
+      logoAct: "quitConfirm",
       right: `<button class="ghost" data-act="log">战斗日志</button>`,
     })}
 
@@ -2171,6 +2193,10 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
               <button data-act="pace:realtime" aria-pressed="${rt}">拟真</button>
             </div>
           </div>
+          <div class="switch-row">
+            <div><div class="t">AI 训练数据</div><div class="d">看看这些对手是怎么练出来的（含作者留言）</div></div>
+            <button class="ghost" data-act="openTraining">打开</button>
+          </div>
           <div class="switch-row" style="display:block">
             <div class="t">声明</div>
             <div class="declare">
@@ -2179,6 +2205,21 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
             </div>
           </div>
           <p class="muted" style="margin-top:12px">设置会保存在本地浏览器（localStorage）。</p>
+        </div>
+      </div></div>`;
+  }
+
+  /** 战斗中点头像/logo 时确认是否中止对局 */
+  function modalQuit() {
+    return `<div class="modal-mask" data-act="closemodal-bg">
+      <div class="modal" style="max-width:440px">
+        <header><h3>返回主页</h3><button class="iconbtn" data-act="closemodal" aria-label="关闭">✕</button></header>
+        <div class="body">
+          <p style="font-size:14px;color:var(--ink);margin-top:0">是否要返回主页？这会中断当前战斗。</p>
+          <div class="row" style="margin-top:16px">
+            <button class="cta" data-act="quitHome" style="font-size:18px;padding:12px 24px">是</button>
+            <button class="ghost" data-act="closemodal">否</button>
+          </div>
         </div>
       </div></div>`;
   }
@@ -2207,7 +2248,9 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
 
     let m = document.getElementById("modal-root");
     if (!m) { m = document.createElement("div"); m.id = "modal-root"; document.body.appendChild(m); }
-    m.innerHTML = S.modal === "help" ? modalHelp() : S.modal === "settings" ? modalSettings() : "";
+    m.innerHTML = S.modal === "help" ? modalHelp()
+      : S.modal === "settings" ? modalSettings()
+        : S.modal === "quit" ? modalQuit() : "";
   }
 
   /* --------------------------------------------------------- 流程控制 */
@@ -2255,6 +2298,17 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     }, 100);
   }
   function stopTimer() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+
+  /** 中止当前对局并回首页（战斗中点击左上角 logo 后选「是」走这里） */
+  function abortBattleToHome() {
+    stopTimer();
+    if (S.battle) S.battle.finished = true;
+    S.battle = null;
+    S.lastRecord = null;
+    S.modal = null;
+    S.screen = "home";
+    render();
+  }
 
   function doPlay(id) {
     stopTimer();
@@ -2312,6 +2366,8 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       case "start": S.modal = null; startBattle(); break;
       case "help": S.modal = "help"; render(); break;
       case "settings": S.modal = "settings"; render(); break;
+      case "quitConfirm": stopTimer(); S.modal = "quit"; render(); break;
+      case "quitHome": abortBattleToHome(); break;
       case "closemodal": S.modal = null; render(); break;
       case "closemodal-bg": if (e.target === el) { S.modal = null; render(); } break;
       case "training": S.screen = "training"; render(); break;
@@ -2346,6 +2402,8 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     const act = el.getAttribute("data-act");
     if (act === "closemodal") { S.modal = null; render(); }
     else if (act === "closemodal-bg") { if (e.target === el) { S.modal = null; render(); } }
+    else if (act === "quitHome") { abortBattleToHome(); }
+    else if (act === "openTraining") { S.modal = null; S.screen = "training"; render(); }
     else if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); render(); }
     else if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); render(); }
     else if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); }
