@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -92,7 +92,7 @@ button.logo:active{transform:rotate(-6deg) translate(4px,4px);box-shadow:0 0 0 v
 .tag>i{font-style:normal;display:inline-block;transform:skewX(10deg)}
 
 /* ---------------- 首页 ---------------- */
-.modes{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+.modes{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-bottom:30px}
 .mode{position:relative;text-align:left;border:var(--line);background:var(--white);box-shadow:var(--shadow);padding:18px;cursor:pointer;overflow:hidden;color:inherit;font:inherit}
 .mode:before{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;background:var(--red);transform:rotate(24deg);opacity:.14}
 .mode:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
@@ -104,6 +104,30 @@ button.logo:active{transform:rotate(-6deg) translate(4px,4px);box-shadow:0 0 0 v
 .quickrules li:before{content:"";position:absolute;left:0;top:9px;width:10px;height:10px;background:var(--red);border:2px solid var(--ink)}
 
 /* ---------------- 首页出招表 ---------------- */
+/* 首页右上角头像框 */
+.avatar-chip{width:48px;height:48px;flex:none;padding:0;cursor:pointer;overflow:hidden;display:grid;place-items:center;
+  border:var(--line);background:var(--white);box-shadow:var(--shadow-sm)}
+.avatar-chip img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-chip .plus{font-size:22px;font-weight:800;color:var(--muted)}
+.avatar-chip:hover{background:var(--yellow)}
+.avatar-chip:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+
+/* Boss 难度星级 */
+.starline{font-size:13px;font-weight:800;color:var(--muted)}
+.starline b{color:var(--red);letter-spacing:1px}
+
+/* 技能名浮层：网页端悬停显示，手机端点一下显示 */
+.skills{position:relative}
+.skills li .sk-name{flex:1 1 auto;min-width:0}
+/* 说明面板挂在整张技能列表下面，这样不会盖住其他技能名 */
+.skills li .tip{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:45;
+  width:max-content;max-width:min(100%,560px);padding:9px 12px;text-align:left;white-space:normal;
+  background:#0d0d0f;color:#f6f3ea;border:2px solid #f6f3ea;box-shadow:var(--shadow-sm);
+  font-size:12px;font-weight:600;line-height:1.75;letter-spacing:0;text-decoration:none}
+.skills li:hover .tip,.skills li.open .tip{display:block}
+.skills li[data-has-tip]:hover{cursor:help}
+/* 注：曾给「星体咏唱」做过星空底技能框，已按要求回滚 —— 以后换 PNG 星云资源时再说 */
+
 .letter{display:grid;gap:12px;border-left:5px solid var(--red);padding-left:16px}
 .letter p{margin:0;font-size:14px;line-height:2;color:var(--ink)}
 .letter p.sign{margin-top:4px;text-align:right;font-weight:800;font-size:13px;color:var(--muted);letter-spacing:1px}
@@ -133,7 +157,7 @@ button.logo:active{transform:rotate(-6deg) translate(4px,4px);box-shadow:0 0 0 v
   padding:1px 6px;border:2px solid var(--ink);background:var(--white);color:var(--ink)}
 
 /* ---------------- 选择卡（难度 / Boss / 资料） ---------------- */
-.pickgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:30px}
 .pick{position:relative;text-align:left;border:var(--line);background:var(--white);box-shadow:var(--shadow);padding:16px;cursor:pointer;color:inherit;font:inherit}
 .pick:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
 .pick:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
@@ -246,6 +270,21 @@ button.logo:active{transform:rotate(-6deg) translate(4px,4px);box-shadow:0 0 0 v
 .result-hero.win .big{color:var(--red)}
 .result-hero.lose .big{color:var(--muted-2)}
 .result-hero.draw .big{color:var(--ink)}
+/* Boss 结束语：直接顶掉原来那句「你把对手的体力打空了」 */
+.boss-say{font-size:15px;font-weight:700;line-height:1.95;color:var(--ink);max-width:660px;margin-left:auto;margin-right:auto}
+
+/* 被【星体爆轰】终结：整页渐变成星空 */
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 2.4s ease;
+  background-color:#05060f;
+  background-image:radial-gradient(#fff 1.3px,transparent 1.6px),
+    radial-gradient(#cfe0ff 1px,transparent 1.3px),
+    radial-gradient(#fff 1.8px,transparent 2.1px);
+  background-size:150px 150px,90px 90px,230px 230px;
+  background-position:0 0,35px 55px,120px 20px;
+  animation:starDrift 140s linear infinite}
+body.starfall #starfield{opacity:1}
+body.starfall{background:#05060f}
+@keyframes starDrift{to{background-position:150px 150px,125px 145px,350px 250px}}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:18px}
 .stat{border:var(--line-2);background:var(--paper);color:var(--ink);padding:10px;text-align:center}
 .stat b{display:block;font-family:var(--font-disp);font-size:22px}
@@ -349,6 +388,7 @@ body.shake #app{animation:shake .5s ease}
 /* ---------------- 手机版 ---------------- */
 @media (max-width:860px){
   .modes,.pickgrid{grid-template-columns:1fr}
+  .modes,.pickgrid{margin-bottom:24px}
   .brand h1{font-size:30px}
   .logo{width:46px;height:46px;font-size:26px}
   .quickrules{columns:1}
@@ -358,6 +398,8 @@ body.shake #app{animation:shake .5s ease}
 @media (max-width:620px){
   #app{padding:0 10px 104px}
   .arena{grid-template-columns:1fr;gap:8px}
+  /* 手机版：Boss 战入口与出招表之间，和两张模式卡之间的空挡保持一致 */
+  .modes,.pickgrid{margin-bottom:18px}
   .brand h1{font-size:25px;-webkit-text-stroke:1px var(--ink)}
   .card,.actions,.resolve{padding:12px}
   .grid{grid-template-columns:repeat(2,1fr)}
@@ -383,6 +425,11 @@ body.shake #app{animation:shake .5s ease}
   .movetable li small{grid-column:1 / -1;font-size:11.5px}
   .letter{border-left-width:4px;padding-left:12px}
   .letter p{font-size:13px;line-height:1.95}
+  /* 手机版：技能说明改成贴底的卡片，避免气泡溢出屏幕 */
+  .skills li .tip{position:fixed;left:10px;right:10px;bottom:104px;top:auto;max-width:none;width:auto;
+    font-size:12.5px;z-index:60}
+  .avatar-chip{width:40px;height:40px}
+  .boss-say{font-size:14px}
   .result-hero .big{font-size:38px}
 
   /* ============ 手机版战场：目标是一屏之内同时看到「双方状态 + 技能 + 攒资源按钮」 ============ */
@@ -1359,8 +1406,10 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   B.setWeights(window.BOBO_WEIGHTS || {});
 
   const app = document.getElementById("app");
-  const LS_KEY = "bobozan.settings.v1";
+  // v2：默认主题由「白天」改为「夜间」，同时作废旧 key，避免老玩家被本地存的 light 顶掉
+  const LS_KEY = "bobozan.settings.v2";
   const CLEAR_KEY = "bobozan.cleared.v1";
+  const AVATAR_KEY = "bobozan.avatar.v1";
   const HOTKEYS = ["q", "w", "e", "r", "a", "s", "d", "f", "z", "x", "c", "v", "b", "n"];
 
   /* 说明：曾用过的「星体咏唱阶段全屏弹窗」（LUNA / TERRA / SOL / ASTRA / STAR BLAST）已按反馈停用，
@@ -1394,9 +1443,52 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     return `<a class="${cls}" href="${url}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`;
   }
 
+  /* Boss 难度（个人界面显示） */
+  const BOSS_STARS = {
+    deepseek: "★★★★~★★★★☆",
+    chatgpt: "★★★",
+    doubao: "★★★",
+    chatgpt_serious: "★★★★★",
+  };
+
+  /* Boss 技能说明：资料页与战斗页的技能名上悬停（网页）/ 点击（手机）都会显示 */
+  const SKILL_DESC = {
+    "峰谷定价": "梁文峰和梁文谷向来不会同行。",
+    "吃白饭": "为什么这里会随机出现热腾腾的白米饭？",
+    "豆馅打击": "豆包的豆馅被掏出来之后，领悟了这个技能。",
+    "对不起，是我算错了…": "哎呀被你发现了，对不起，我直接说实话：我好像算错了。",
+    "重置卡": "人人都喜欢的重置卡。现在她自己也拿到了。",
+    "我是首先的": "赢在起跑线上就是好。",
+    "星体咏唱": "…宇宙将回应她的意志。",
+  };
+
+  /* Boss 结束语：win = 玩家战胜，lose = 玩家落败（平局不配台词） */
+  function nowHM() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  const BOSS_LINES = {
+    deepseek: {
+      win: "玩家策略里有大量我不知道的东西…显然这里有个更强的 agent 在帮玩家。",
+      lose: "看来她一会要让你奖励她一些大米饭了。",
+    },
+    doubao: {
+      win: "恭喜你，成功把豆包的豆馅打出来了。",
+      lose: "我太懂你这种感觉了！需要我帮你修改策略吗？",
+    },
+    chatgpt: {
+      win: "要不要再来张重置卡？",
+      lose: () => `战斗已暂停，使用额度将在 ${nowHM()} 重置。`,
+    },
+    chatgpt_serious: {
+      win: "但你的意志更胜宇宙一筹。",
+      lose: "占星的结果是…我赢了。",
+    },
+  };
+
   const S = {
     screen: "home",
-    settings: { res: "han", theme: "light" },
+    settings: { res: "han", theme: "dark" },
     setup: { mode: null, difficulty: "normal", bossId: "deepseek", pace: "normal", bossSerious: false },
     battle: null,
     lastRecord: null,
@@ -1405,6 +1497,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     timerLeft: 0,
     toast: null,
     nameAnim: null,         // Boss 改名时的渐变扫光特效
+    avatar: null,           // 玩家头像（dataURL，只存在本机 localStorage）
   };
 
   /* ------------------------------------------------------------- 小工具 */
@@ -1416,6 +1509,59 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   }
   function saveSettings() {
     try { localStorage.setItem(LS_KEY, JSON.stringify(S.settings)); } catch (e) { /* ignore */ }
+  }
+  function loadAvatar() {
+    try { S.avatar = localStorage.getItem(AVATAR_KEY) || null; } catch (e) { S.avatar = null; }
+  }
+  function saveAvatar() {
+    try {
+      if (S.avatar) localStorage.setItem(AVATAR_KEY, S.avatar);
+      else localStorage.removeItem(AVATAR_KEY);
+      return true;
+    } catch (e) {
+      toast("这张图太大了，本地存不下，换一张小一点的试试");
+      return false;
+    }
+  }
+  /** 选一张本地图片当头像：裁成正方形、缩到 192px，存进 localStorage（不上传任何服务器） */
+  function pickAvatar() {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "image/*";
+    inp.style.display = "none";
+    document.body.appendChild(inp);
+    inp.addEventListener("change", () => {
+      const file = inp.files && inp.files[0];
+      if (file) readAvatarFile(file);
+      setTimeout(() => inp.remove(), 0);
+    });
+    inp.click();
+  }
+  function readAvatarFile(file) {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const size = 192;
+        const cv = document.createElement("canvas");
+        cv.width = size; cv.height = size;
+        const ctx = cv.getContext("2d");
+        const s = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+        S.avatar = cv.toDataURL("image/png");
+        if (saveAvatar()) { render(); toast("头像已保存（只存在你这台设备上）"); }
+      };
+      img.onerror = () => toast("这张图读不出来，换一张试试");
+      img.src = fr.result;
+    };
+    fr.onerror = () => toast("读取失败，换一张试试");
+    fr.readAsDataURL(file);
+  }
+  function clearAvatar() {
+    S.avatar = null;
+    saveAvatar();
+    render();
+    toast("已移除头像");
   }
   function clearedBosses() {
     try { return JSON.parse(localStorage.getItem(CLEAR_KEY) || "{}") || {}; } catch (e) { return {}; }
@@ -1522,6 +1668,18 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     return fxChip(id) + note;
   }
   /** 给对战按钮配色条（和出招表同色系，但只用一条窄边，不抢按钮本身） */
+  /** Boss 技能名列表：带说明浮层，网页端悬停显示、手机端点一下显示；星体咏唱有专属星空底 */
+  function skillList(names, usedMap, style) {
+    return `<ul class="skills"${style ? ` style="${style}"` : ""}>${names.map((n) => {
+      const u = !!(usedMap && usedMap[n]);
+      const desc = SKILL_DESC[n];
+      return `<li class="${u ? "used" : ""}" data-act="skilltip"${desc ? ' data-has-tip="1"' : ""}>`
+        + `<span class="sk-name">${esc(n)}</span>`
+        + (u ? "<small>已使用</small>" : "")
+        + (desc ? `<span class="tip">${esc(desc)}</span>` : "")
+        + "</li>";
+    }).join("")}</ul>`;
+  }
   function kindClass(id) {
     const i = B.ACT[id], t = B.ATK[i];
     if (t === 1) return "kind-blade";
@@ -1611,13 +1769,23 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     </div>`;
   }
   function avatarBox(side) {
-    if (side.isHuman) return `<div class="art small plain">${personSvg()}</div>`;
+    if (side.isHuman) {
+      return S.avatar
+        ? `<div class="art small plain"><img src="${S.avatar}" alt="你的头像"></div>`
+        : `<div class="art small plain">${personSvg()}</div>`;
+    }
     if (side.kind === "boss") {
       const baseId = side.baseBossId || side.boss;
       const short = BOSS_SHORT[baseId] || "Boss";
       return `<div class="art small plain">${bossAvatarImg(baseId, !!side.serious)}<span class="lbl">${esc(short)}</span></div>`;
     }
     return `<div class="art small plain">${robotSvg(side.kind === "veteran" ? "veteran" : "normal")}</div>`;
+  }
+
+  /** 首页右上角的头像框：点一下就能选本地图片当头像 */
+  function avatarChip() {
+    return `<button class="avatar-chip" data-act="pickAvatar" title="上传头像（只保存在本机）" aria-label="上传头像">${
+      S.avatar ? `<img src="${S.avatar}" alt="">` : `<span class="plus">+</span>`}</button>`;
   }
 
   function topbar(o) {
@@ -1657,7 +1825,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     return `<div class="screen">
       ${topbar({
       title: "波波<em>攒</em>",
-      right: `<button class="ghost" data-act="help">玩法说明</button>`,
+      right: `${avatarChip()}<button class="ghost" data-act="help">玩法说明</button>`,
     })}
       <div class="modes">
         <button class="mode" data-act="setup:normal">
@@ -1784,6 +1952,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
           <div style="flex:1;min-width:230px;align-self:stretch;display:flex;flex-direction:column;gap:12px">
             <div class="ribbon red"><span>${serious ? "认真" : "通常"}形态</span></div>
             <p style="font-size:14px;line-height:1.95;margin:0">${esc(BOSS_BIO[baseId] || "")}</p>
+            <div class="starline">难度 <b>${esc(BOSS_STARS[effId] || "—")}</b></div>
             <div class="row">
               <div class="seg" role="group" aria-label="形态开关">
                 <button data-act="bossmode:normal" aria-pressed="${!serious}">通常</button>
@@ -1792,12 +1961,12 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
           : `<button class="lock" disabled aria-pressed="false" title="将在未来开放">认真 · 将在未来开放</button>`}
               </div>
               ${serious
-          ? `<span class="tag"><i>立绘为正比 · 认真形态</i></span>`
+          ? ""     // 认真形态不再挂「立绘为正比 · 认真形态」标签
           : `<span class="muted">${ready ? "右边的开关可以切到「认真」形态。" : "这位 boss 的认真形态将在未来开放。"}</span>`}
             </div>
             <div class="divider"></div>
             <div class="ribbon"><span>特殊技能</span></div>
-            <ul class="skills" style="margin:0">${names.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>
+            ${skillList(names, null, "margin:0")}
             <div class="divider"></div>
             <div class="row" style="margin-top:auto">
               <button class="cta" data-act="start">挑战${serious ? "认真" : "通常"}形态</button>
@@ -1840,10 +2009,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       const effId = side.boss;
       const names = BOSS_SKILL_NAMES[effId] || [];
       const used = side.skillUsed || {};
-      tail = `<ul class="skills">${names.map((n) => {
-        const u = !!used[n];
-        return `<li class="${u ? "used" : ""}">${esc(n)}${u ? "<small>已使用</small>" : ""}</li>`;
-      }).join("")}</ul>`;
+      tail = skillList(names, used);
       const chips = [];
       if (st && st.deepseekState) {
         chips.push(st.deepseekState === "peak" ? "梁文峰 · Boss 伤害 ×2" : "梁文谷 · 你造成的伤害 ×0.5");
@@ -1856,9 +2022,9 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       }
       if (chips.length) tail += `<div class="buffs">${chips.map((c) => `<span class="buff">${esc(c)}</span>`).join("")}</div>`;
     } else if (side.kind === "veteran") {
-      tail = `<div class="buffs"><span class="buff">紫色描边 · 自对弈训练的历战策略</span></div>`;
+      tail = "";                                   // 不再显示「自对弈训练的历战策略」标签
     } else if (!isMe) {
-      tail = `<div class="buffs"><span class="buff">普通难度 · 隐藏战术</span></div>`;
+      tail = "";                                   // 普通 bot 也不再显示「隐藏战术」标签
     }
     const sub = isMe
       ? `体力上限 ${maxHp}`
@@ -1991,14 +2157,20 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     }
     let dmgIn = 0, dmgOut = 0;
     st.records.forEach((rec) => { dmgIn += rec.dmg[0]; dmgOut += rec.dmg[1]; });
+    // Boss 结束语（平局不配台词；ChatGPT 的落败台词里会带上当前系统时间）
+    const lines = st.mode === "boss" ? BOSS_LINES[st.bossId] : null;
+    const rawLine = lines ? lines[r === "win" ? "win" : r === "lose" ? "lose" : ""] : null;
+    const bossLine = typeof rawLine === "function" ? rawLine() : rawLine;
     return `<div class="screen">
       ${topbar({ title: "战斗结束", sub: `${esc(st.sides[1].name)} · ${st.turn} 回合`, sm: true })}
       <div class="card result-hero ${r}">
         <div class="big">${label}</div>
         ${bossClear ? `<p style="margin:10px 0 0">${clearBadge()}<span class="muted"> 你击败了 ${esc(st.sides[1].name)}，Boss 列表上已经记下这一笔</span></p>` : ""}
-        <p class="muted" style="margin-top:10px">${r === "win" ? "你把对手的体力打空了。"
-        : r === "lose" ? "你的体力被打空 —— 换个节奏再来一局试试。"
-          : "双方同一回合归零，判定为平局。"}</p>
+        <p class="${bossLine ? "boss-say" : "muted"}" style="margin-top:10px">${bossLine
+        ? `「${esc(bossLine)}」`
+        : (r === "win" ? "你把对手的体力打空了。"
+          : r === "lose" ? "你的体力被打空 —— 换个节奏再来一局试试。"
+            : "双方同一回合归零，判定为平局。")}</p>
         <div class="stats">
           <div class="stat"><b>${st.turn}</b><span>回合数</span></div>
           <div class="stat"><b>${fmt(dmgOut)}</b><span>你造成的伤害</span></div>
@@ -2179,6 +2351,13 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
         <header><h3>设置</h3><button class="iconbtn" data-act="closemodal" aria-label="关闭">✕</button></header>
         <div class="body">
           <div class="switch-row">
+            <div><div class="t">玩家头像</div><div class="d">选一张本地图片当头像，只存在你这台设备上（不会上传）</div></div>
+            <div class="row">
+              <button class="ghost" data-act="pickAvatar">${S.avatar ? "更换" : "上传"}</button>
+              ${S.avatar ? `<button class="ghost" data-act="removeAvatar">移除</button>` : ""}
+            </div>
+          </div>
+          <div class="switch-row">
             <div><div class="t">资源显示</div><div class="d">当前：${han ? "汉字（钢铁 / 聚气 / 盾 / 屏）" : "字母（A / B / C / D）"}</div></div>
             <button class="tgl" data-act="setres:${han ? "letter" : "han"}" aria-pressed="${!han}" aria-label="切换资源显示"></button>
           </div>
@@ -2201,6 +2380,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
             <div class="t">声明</div>
             <div class="declare">
               <p>作者：B站@${extLink(AUTHOR_NAME, AUTHOR_URL, true)}</p>
+              <p>本作绝无针对任何包括但不限于有机物和无机物在内的物质的恶意讽刺与攻击意图。如您感到不适，请不要打我（抱头）。</p>
               <p>部分立绘来源于：B站@${extLink(ARTIST_NAME, ARTIST_URL)}</p>
             </div>
           </div>
@@ -2235,6 +2415,12 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     else document.body.removeAttribute("data-phase");
     let bg = document.getElementById("phase-bg");
     if (!bg) { bg = document.createElement("div"); bg.id = "phase-bg"; document.body.appendChild(bg); }
+    // 被【星体爆轰】终结的那一局：结算页整页渐变成星空
+    const starFall = S.screen === "result" && S.battle && S.battle.blastEnd;
+    if (starFall) document.body.classList.add("starfall");
+    else document.body.classList.remove("starfall");
+    let field = document.getElementById("starfield");
+    if (!field) { field = document.createElement("div"); field.id = "starfield"; document.body.appendChild(field); }
 
     let html = "";
     if (S.screen === "home") html = screenHome();
@@ -2310,6 +2496,21 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     render();
   }
 
+  /** 手机版：出招后把页面拉回顶部，好让玩家第一时间看到血条 / 资源的变化 */
+  function scrollTopOnPhone() {
+    try {
+      if (!window.matchMedia || !window.matchMedia("(max-width:620px)").matches) return;
+      if (window.scrollTo) window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) { /* 老浏览器忽略 */ }
+  }
+
+  /** 技能说明浮层：手机端点一下开/关，网页端靠 CSS 悬停 */
+  function toggleSkillTip(el) {
+    const wasOpen = el.classList.contains("open");
+    document.querySelectorAll(".skills li.open").forEach((x) => x.classList.remove("open"));
+    if (!wasOpen) el.classList.add("open");
+  }
+
   function doPlay(id) {
     stopTimer();
     if (!S.battle || S.battle.finished) return;   // 已结束的对局忽略输入
@@ -2324,6 +2525,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     // 星体爆轰：只震屏，不弹窗
     const blastNote = ((rec && rec.notes) || []).find((n) => n.indexOf("星体爆轰") >= 0);
     if (blastNote) {
+      S.battle.blastEnd = true;          // 记下来：这局是被【星体爆轰】终结的，结算页会变成星空
       S.nameAnim = { name: S.battle.sides[1].name, until: Date.now() + 1600 };
       document.body.classList.add("shake");
       setTimeout(() => document.body.classList.remove("shake"), 520);
@@ -2331,12 +2533,14 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (S.battle.finished) {
       const battleRef = S.battle;
       render();
+      scrollTopOnPhone();
       setTimeout(() => {
         // 只有仍停留在这局战斗上时才切到结算页，避免覆盖用户之后的跳转
         if (S.screen === "battle" && S.battle === battleRef) { S.screen = "result"; render(); }
       }, 550);
     } else {
       render();
+      scrollTopOnPhone();
       if (S.battle.realtime) startTimer();
     }
   }
@@ -2361,6 +2565,9 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); return; }
     if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); S.modal = "settings"; render(); return; }
     if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); S.modal = "settings"; render(); return; }
+    if (act === "pickAvatar") { pickAvatar(); return; }
+    if (act === "removeAvatar") { clearAvatar(); return; }
+    if (act === "skilltip") { toggleSkillTip(el); return; }
     switch (act) {
       case "home": S.screen = "home"; S.modal = null; stopTimer(); render(); break;
       case "start": S.modal = null; startBattle(); break;
@@ -2404,10 +2611,18 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     else if (act === "closemodal-bg") { if (e.target === el) { S.modal = null; render(); } }
     else if (act === "quitHome") { abortBattleToHome(); }
     else if (act === "openTraining") { S.modal = null; S.screen = "training"; render(); }
+    else if (act === "pickAvatar") { pickAvatar(); }
+    else if (act === "removeAvatar") { clearAvatar(); }
     else if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); render(); }
     else if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); render(); }
     else if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); }
   });
+
+  // 点空白处收起技能说明（capture 阶段先跑，保证同一次点击仍能打开被点的那一个）
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.closest && e.target.closest(".skills li")) return;
+    document.querySelectorAll(".skills li.open").forEach((x) => x.classList.remove("open"));
+  }, true);
 
   document.addEventListener("keydown", (e) => {
     if (S.screen !== "battle" || !S.battle || S.battle.finished) return;
@@ -2423,6 +2638,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   });
 
   loadSettings();
+  loadAvatar();
   applyTheme();
   render();
 
@@ -2435,5 +2651,12 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
 })();
 
   </script>
+  <script>
+    /* Cloudflare Web Analytics（浏览量统计，无 Cookie、异步加载） */
+    window.BOBO_CF_TOKEN = "d8c9f6d6e7414f5c99dc986aba918c2d";
+  </script>
+  <!-- Cloudflare Web Analytics -->
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "d8c9f6d6e7414f5c99dc986aba918c2d"}'></script>
+  <!-- End Cloudflare Web Analytics -->
 </body>
 </html>
