@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="波波攒 —— 1v1 同时出招的资源攻防对战">
+  <title>波波攒</title>
+  <style>
+/* ============================================================
+   波波攒 · 正式版样式（风格 A：高饱和海报风）
+   设计依据：ui-ux-pro-max → Bauhaus / 高对比海报
+     · 硬阴影 6px 6px 0（按下位移+阴影归零的机械反馈）
+     · 高饱和红 #e2001a / 黄 #ffd400 / 近黑 #0d0d0f + 米白纸面
+     · 切角卡片、网点纹理、大写粗体标题、slide-over 转场
+   白天 = 米白纸面；夜间 = 近黑纸面（同一套版式，仅换色调）
+   无障碍：正文对比 ≥ 4.5:1、点击区 ≥ 44px、可见焦点环、尊重 reduced-motion
+   ============================================================ */
+:root{
+  --ink:#0d0d0f; --paper:#f3f1ea; --paper-2:#e9e6dc;
+  --red:#e2001a; --red-2:#a8000f; --yellow:#ffd400; --cyan:#00b3c8;
+  --white:#ffffff; --muted:#4a4a52; --muted-2:#6a6a73;
+  --shadow:6px 6px 0 var(--ink); --shadow-sm:4px 4px 0 var(--ink);
+  --line:3px solid var(--ink); --line-2:2px solid var(--ink);
+  --good:#12a150; --bad:#c1121f;
+  --font-disp:"Impact","Haettenschweiler","Arial Black","Noto Sans SC","PingFang SC",sans-serif;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+[data-theme="dark"]{
+  --ink:#f6f3ea; --paper:#101013; --paper-2:#1b1b20;
+  --white:#181820; --muted:#c9c6bd; --muted-2:#9a978f;
+  --shadow:6px 6px 0 #000; --shadow-sm:4px 4px 0 #000;
+  --line:3px solid #f6f3ea; --line-2:2px solid #f6f3ea;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  transition:background .25s ease,color .25s ease;
+}
+.bg{position:fixed;inset:-10%;z-index:0;pointer-events:none;overflow:hidden}
+.bg .w1{position:absolute;width:60vw;height:150vh;left:-10vw;top:-20vh;transform:rotate(18deg);background:var(--red);opacity:.10}
+.bg .w2{position:absolute;width:46vw;height:120vh;right:-14vw;top:-10vh;transform:rotate(-14deg);background:var(--ink);opacity:.06}
+.bg .dots{position:absolute;inset:0;opacity:.14;background-image:radial-gradient(var(--ink) 1.4px,transparent 1.5px);background-size:14px 14px;
+  animation:drift 24s linear infinite}
+@keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-28px,-28px,0)}}
+@media (prefers-reduced-motion:reduce){.bg .dots{animation:none}}
+#app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 16px 44px}
+
+/* ---------------- 顶栏 / 通用零件 ---------------- */
+.topbar{display:flex;align-items:center;gap:14px;margin:16px 0 20px}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.logo{width:52px;height:52px;background:var(--red);border:var(--line);box-shadow:var(--shadow-sm);display:grid;place-items:center;
+  color:#fff;font-family:var(--font-disp);font-size:30px;line-height:1;transform:rotate(-6deg);flex:none}
+.brand h1{margin:0;font-family:var(--font-disp);font-size:38px;letter-spacing:2px;line-height:1;text-transform:uppercase;
+  -webkit-text-stroke:1.5px var(--ink)}
+.brand h1 em{font-style:normal;color:var(--red);background:var(--ink);padding:0 6px;-webkit-text-stroke:0}
+[data-theme="dark"] .brand h1 em{background:var(--red);color:#fff}
+.brand p{margin:4px 0 0;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+.spacer{flex:1}
+.ghost,.iconbtn,.back{border:var(--line);background:var(--white);color:var(--ink);box-shadow:var(--shadow-sm);cursor:pointer;min-height:44px}
+.ghost{padding:11px 15px;font-weight:800;font-size:13px;letter-spacing:1px}
+.iconbtn{width:48px;height:48px;display:grid;place-items:center}
+.back{width:48px;height:48px;display:grid;place-items:center;font-size:20px;font-weight:900}
+.ghost:hover,.iconbtn:hover,.back:hover{background:var(--yellow);color:#0d0d0f}
+.ghost:active,.iconbtn:active,.back:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.card{background:var(--white);border:var(--line);box-shadow:var(--shadow);padding:16px;margin-bottom:18px}
+.ribbon{display:inline-block;background:var(--ink);color:var(--white);font-family:var(--font-disp);font-size:17px;letter-spacing:2px;
+  padding:4px 12px;transform:skewX(-10deg);margin-bottom:12px}
+.ribbon>span{display:inline-block;transform:skewX(10deg)}
+.ribbon.red{background:var(--red);color:#fff}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.muted{font-size:12.5px;color:var(--muted);line-height:1.65}
+.divider{height:3px;background:var(--ink);opacity:.12;margin:14px 0}
+
+.seg{display:inline-flex;border:var(--line);box-shadow:var(--shadow-sm);background:var(--white)}
+.seg button{border:0;background:transparent;color:var(--ink);padding:12px 16px;font-weight:800;font-size:13px;cursor:pointer;min-height:44px}
+.seg button+button{border-left:var(--line)}
+.seg button[aria-pressed="true"]{background:var(--red);color:#fff}
+.seg button[disabled]{opacity:.42;cursor:not-allowed;text-decoration:line-through}
+.seg button.lock{text-decoration:none;opacity:.62}
+.cta{border:var(--line);background:var(--red);color:#fff;font-family:var(--font-disp);font-size:22px;letter-spacing:3px;padding:14px 28px;
+  box-shadow:var(--shadow);cursor:pointer;text-transform:uppercase}
+.cta:active{transform:translate(5px,5px);box-shadow:0 0 0 var(--ink)}
+/* 标签用「固定深色底 + 黄字」：夜间模式下 --ink 会翻成浅色，跟着翻会变成黄字压白底、糊成一片 */
+.tag{display:inline-block;margin-top:10px;background:#0d0d0f;color:#ffd400;font-size:11.5px;font-weight:800;letter-spacing:1px;
+  padding:4px 9px;transform:skewX(-10deg)}
+.tag>i{font-style:normal;display:inline-block;transform:skewX(10deg)}
+
+/* ---------------- 首页 ---------------- */
+.modes{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+.mode{position:relative;text-align:left;border:var(--line);background:var(--white);box-shadow:var(--shadow);padding:18px;cursor:pointer;overflow:hidden;color:inherit;font:inherit}
+.mode:before{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;background:var(--red);transform:rotate(24deg);opacity:.14}
+.mode:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
+.mode:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.mode h3{margin:0 0 8px;font-family:var(--font-disp);font-size:25px;letter-spacing:1px}
+.mode p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.75}
+.quickrules{list-style:none;margin:0;padding:0;columns:2;column-gap:26px}
+.quickrules li{position:relative;padding-left:20px;font-size:13px;line-height:1.8;color:var(--muted);break-inside:avoid}
+.quickrules li:before{content:"";position:absolute;left:0;top:9px;width:10px;height:10px;background:var(--red);border:2px solid var(--ink)}
+
+/* ---------------- 首页出招表 ---------------- */
+.letter{display:grid;gap:12px;border-left:5px solid var(--red);padding-left:16px}
+.letter p{margin:0;font-size:14px;line-height:2;color:var(--ink)}
+.letter p.sign{margin-top:4px;text-align:right;font-weight:800;font-size:13px;color:var(--muted);letter-spacing:1px}
+.movetable{display:grid;gap:14px}
+.mt-title{font-family:var(--font-body);font-weight:800;font-size:13px;letter-spacing:2px;color:var(--red);
+  padding-bottom:6px;border-bottom:3px solid var(--ink);margin-bottom:4px}
+.movetable ul{list-style:none;margin:0;padding:0}
+.movetable li{display:grid;grid-template-columns:100px max-content 1fr;align-items:center;gap:10px;
+  padding:7px 0;border-bottom:2px dashed rgba(13,13,15,.16)}
+:root[data-theme="dark"] .movetable li{border-bottom-color:rgba(246,243,234,.18)}
+.movetable li:last-child{border-bottom:0}
+.movetable li b{font-size:14.5px;font-weight:800}
+.movetable li em{font-style:normal;font-size:11.5px;font-weight:800;background:#0d0d0f;color:#ffd400;padding:3px 7px;
+  text-align:center;justify-self:start;white-space:nowrap}
+.movetable li small{font-size:12px;color:var(--muted)}
+/* 招式类型色标：刀红 / 气青 / 特殊紫 / 无法防御黑黄 / 积攒纸白 / 防御绿 */
+.tp{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.5px;padding:1px 6px;margin-right:2px;
+  border:2px solid var(--ink);color:#fff;white-space:nowrap;vertical-align:1px}
+.tp-blade{background:#e2001a}
+.tp-qi{background:#007d99}                 /* 比原来的 #00a5c8 更深，避免和浅蓝色的积攒混淆 */
+.tp-special{background:#7c3aed}
+.tp-unblock{background:#0d0d0f;color:#ffd400}
+.tp-gain-a{background:#f4a3ab;color:#0d0d0f}   /* 钢铁 / 盾 */
+.tp-gain-b{background:#a8d8ef;color:#0d0d0f}   /* 聚气 / 屏 */
+.tp-guard{background:#12a150}
+.movetable li .tpnote{display:inline-block;font-style:normal;font-size:10.5px;font-weight:800;margin-left:6px;
+  padding:1px 6px;border:2px solid var(--ink);background:var(--white);color:var(--ink)}
+
+/* ---------------- 选择卡（难度 / Boss / 资料） ---------------- */
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.pick{position:relative;text-align:left;border:var(--line);background:var(--white);box-shadow:var(--shadow);padding:16px;cursor:pointer;color:inherit;font:inherit}
+.pick:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
+.pick:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.pick h3{margin:0 0 4px;font-family:var(--font-body);font-weight:800;font-size:20px;letter-spacing:.4px}
+.pick .role{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--red);text-transform:uppercase}
+.pick p{margin:8px 0 0;font-size:13px;color:var(--muted);line-height:1.75}
+.pick .enter{margin-top:10px;font-size:11.5px;font-weight:800;color:var(--muted-2);letter-spacing:1px}
+.pick.locked{opacity:.9}
+.cleared{outline:5px solid var(--good);outline-offset:-7px}
+.clearbadge,.clear-badge{display:inline-block;background:var(--good);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:1px;padding:3px 8px;margin-left:8px}
+
+/* 立绘位（通常=Q版 / 认真=正比） */
+.art{position:relative;border:var(--line);background:repeating-linear-gradient(45deg,var(--white) 0 10px,var(--paper-2) 10px 20px);
+  display:grid;place-items:center;text-align:center;color:var(--muted-2);font-weight:800;font-size:11.5px;letter-spacing:1px;overflow:hidden}
+.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:4px}
+.art.hasimg{background:var(--paper-2)}            /* 立绘加载成功后：不用斜纹占位底 */
+.art.hasimg .lbl{display:none}                    /* 也不用再显示文字占位 */
+.art.square{width:320px;height:320px;flex:none}   /* 通常形态 · Q 版（1:1） */
+.art.tall{width:220px;height:440px;flex:none}     /* 认真形态 · 正比（1:2） */
+.art.mid{aspect-ratio:4/3}                        /* Boss 列表里的小图 */
+.art.small{width:72px;height:72px;flex:none;box-shadow:var(--shadow-sm)}
+/* 对战页头像：优先显示立绘裁出的脸部特写；万一没有特写图，退回整张立绘时也对准头顶 */
+.art.small img{padding:0;object-fit:cover;object-position:top}
+.art .lbl span{display:block;font-family:var(--font-disp);font-size:13px;letter-spacing:2px;color:var(--muted)}
+.artnote{font-size:11px;color:var(--muted-2);font-weight:700;margin-top:8px;line-height:1.7}
+.art.plain{background:var(--white)}
+.art.small .lbl{position:relative;z-index:1;font-size:9.5px;font-weight:800;line-height:1.15;letter-spacing:0}
+
+/* 技能名（只给名字，不解释；已用划掉） */
+.skills{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.skills li{border:var(--line-2);background:var(--paper);color:var(--ink);padding:8px 10px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px}
+.skills li:before{content:"";width:10px;height:10px;background:var(--red);border:2px solid var(--ink);flex:none}
+.skills li.used{color:var(--muted-2);text-decoration:line-through;background:var(--white)}
+.skills li.used:before{background:var(--muted-2)}
+.skills li small{margin-left:auto;font-size:11px;font-weight:700;text-decoration:none;color:var(--muted-2)}
+
+/* ---------------- 对战页 ---------------- */
+.arena{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.side{position:relative;background:var(--white);border:var(--line);box-shadow:var(--shadow);padding:14px}
+.side.enemy{border-top:10px solid var(--red)}
+.side.me{border-top:10px solid var(--ink)}
+.sidehead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sidehead h3{margin:0;font-family:var(--font-body);font-weight:800;font-size:19px;letter-spacing:.4px}
+.sidehead .sub{font-size:11px;color:var(--muted-2);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.pill{margin-left:auto;border:var(--line-2);background:var(--yellow);color:#0d0d0f;font-weight:800;font-size:12px;padding:4px 8px;white-space:nowrap}
+.hp{display:flex;gap:4px}
+.hp .hpcell{flex:1;height:22px;border:2px solid var(--ink);background:var(--white);overflow:hidden}
+.hp .hpcell i{display:block;height:100%;width:0;background:var(--red);transition:width .18s ease}
+.hp .hpcell.half i{background:linear-gradient(90deg,var(--red) 50%,var(--white) 50%)}
+.hp .hpcell.dead{border-color:var(--muted-2)}
+.hpline{display:flex;align-items:baseline;gap:10px;margin-top:8px}
+.hpnum{font-family:var(--font-disp);font-size:20px;letter-spacing:1px}
+.res{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.chip{border:var(--line-2);background:var(--paper);color:var(--ink);padding:7px 5px;text-align:center}
+.chip b{display:block;font-family:var(--font-disp);font-size:18px}
+.chip .lab{display:block;font-size:10.5px;font-weight:800;color:var(--muted-2)}
+.chip.full{background:var(--yellow)}
+
+.center{margin:16px 0;display:grid;gap:12px}
+.resolve{border:var(--line);background:var(--white);box-shadow:var(--shadow);padding:12px 14px}
+.vs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;font-weight:700}
+.act{border:var(--line-2);background:var(--paper);color:var(--ink);padding:4px 10px;font-weight:800}
+.act.red{background:var(--red);color:#fff}
+.notes{list-style:none;margin:8px 0 0;padding:0}
+.notes li{position:relative;padding-left:15px;font-size:12.5px;color:var(--muted);line-height:1.85}
+.notes li:before{content:"▶";position:absolute;left:0;top:4px;font-size:9px;color:var(--red)}
+.notes li.flavor{color:var(--ink);font-weight:600}
+.buffs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.buff{border:var(--line-2);background:var(--yellow);color:#0d0d0f;font-size:11px;font-weight:800;padding:3px 7px}
+.buff.done{background:var(--paper);color:var(--muted-2);text-decoration:line-through}
+.timer{height:10px;border:2px solid var(--ink);background:var(--white)}
+.timer i{display:block;height:100%;background:var(--yellow);transition:width .1s linear}
+.timer.danger i{background:var(--red)}
+.timertext{font-size:12px;font-weight:800;letter-spacing:1px;margin-top:6px}
+
+.actions{background:var(--white);border:var(--line);box-shadow:var(--shadow);padding:14px}
+.group+.group{margin-top:14px}
+.group h4{margin:0 0 8px;font-family:var(--font-disp);font-size:15px;letter-spacing:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:10px}
+.abtn{border:var(--line);background:var(--paper);color:var(--ink);box-shadow:var(--shadow-sm);padding:10px;text-align:left;cursor:pointer;min-height:64px;font:inherit}
+.abtn:hover{background:var(--yellow);color:#0d0d0f}
+.abtn:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.abtn b{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;font-size:14.5px}
+.abtn b span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.abtn b em{flex:0 0 auto;font-style:normal;font-size:11px;background:var(--ink);color:var(--paper);padding:2px 6px;white-space:nowrap}
+.abtn small{display:block;margin-top:4px;font-size:11.5px;color:var(--muted)}
+.abtn[disabled]{opacity:.42;cursor:not-allowed}
+.abtn[disabled]:hover{background:var(--paper);color:var(--ink)}
+
+.log{background:var(--white);border:var(--line);box-shadow:var(--shadow)}
+.log h4{margin:0;padding:10px 12px;background:var(--ink);color:var(--paper);font-family:var(--font-disp);font-size:15px;letter-spacing:2px}
+.log ol{list-style:none;margin:0;padding:0;max-height:340px;overflow:auto}
+.log li{display:flex;gap:10px;padding:9px 12px;border-bottom:2px solid var(--ink);font-size:12.5px;align-items:baseline}
+.log li:last-child{border-bottom:0}
+.log .t{font-family:var(--font-disp);font-size:13px;background:var(--red);color:#fff;padding:1px 6px;white-space:nowrap}
+.log .txt{color:var(--muted);line-height:1.75}
+.log .txt b{color:var(--ink)}
+
+/* ---------------- 结算 / 复盘 ---------------- */
+.result-hero{text-align:center;padding:24px 16px 14px}
+.result-hero .big{font-family:var(--font-disp);font-size:54px;letter-spacing:6px;line-height:1}
+.result-hero.win .big{color:var(--red)}
+.result-hero.lose .big{color:var(--muted-2)}
+.result-hero.draw .big{color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:18px}
+.stat{border:var(--line-2);background:var(--paper);color:var(--ink);padding:10px;text-align:center}
+.stat b{display:block;font-family:var(--font-disp);font-size:22px}
+.stat span{font-size:11.5px;color:var(--muted-2);font-weight:700}
+table.replay{width:100%;border-collapse:collapse;font-size:12.5px}
+table.replay th,table.replay td{border-bottom:2px solid var(--ink);padding:7px 6px;text-align:left;vertical-align:top}
+table.replay th{background:var(--ink);color:var(--paper);font-weight:700;white-space:nowrap}
+table.replay td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
+.scroll-x{overflow-x:auto}
+
+/* ---------------- 弹窗 / 提示 ---------------- */
+.modal-mask{position:fixed;inset:0;background:rgba(13,13,15,.55);z-index:50;display:grid;place-items:center;padding:16px}
+.modal{background:var(--white);border:var(--line);box-shadow:var(--shadow);width:100%;max-width:760px;max-height:88vh;overflow:auto}
+.modal header{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;
+  background:var(--ink);color:var(--paper)}
+.modal header h3{margin:0;font-family:var(--font-disp);font-size:18px;letter-spacing:2px}
+.modal header .iconbtn{background:transparent;color:var(--paper);border-color:var(--paper);box-shadow:none}
+.modal .body{padding:16px}
+.modal .body h4{margin:16px 0 8px;font-size:14px}
+.modal .body h4:first-child{margin-top:0}
+.modal .body p,.modal .body li{font-size:13px;line-height:1.8;color:var(--muted)}
+.modal .body ul{padding-left:20px}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:2px solid var(--ink)}
+.switch-row:last-child{border-bottom:0}
+.switch-row .t{font-size:13.5px;font-weight:800}
+.switch-row .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0d0d0f;color:#ffd400;border:2px solid #ffd400;
+  padding:10px 16px;font-size:13px;font-weight:800;letter-spacing:1px;z-index:60;max-width:88vw;text-align:center}
+.screen{animation:slide .26s ease both}
+@keyframes slide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.screen{animation:none}}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+footer.foot{margin-top:24px;text-align:center;font-size:11.5px;color:var(--muted-2);line-height:1.9}
+/* 署名链接：作者 = 紫色 #c192f4；其它第三方链接 = 标准超链接蓝 */
+.foot a,.declare a{text-decoration:underline;text-underline-offset:2px}
+a.credit-link{color:#c192f4;font-weight:800}
+a.credit-link:hover{color:#a97ae0}
+a.ext-link{color:#0b57d0;font-weight:700}
+a.ext-link:hover{color:#0846a8}
+[data-theme="dark"] a.ext-link{color:#7fb2ff}
+[data-theme="dark"] a.ext-link:hover{color:#a6caff}
+.declare{margin-top:6px}
+.declare p{margin:2px 0;font-size:12.5px;line-height:1.9;color:var(--muted)}
+.quickbar{display:none}
+
+/* ---------------- 开关按钮（设置：资源显示 / 白天夜间） ---------------- */
+.tgl{width:80px;height:44px;border:var(--line);background:var(--white);box-shadow:var(--shadow-sm);cursor:pointer;position:relative;padding:0;flex:none}
+.tgl:before{content:"";position:absolute;top:2px;left:2px;width:34px;height:34px;background:var(--ink);transition:transform .18s ease,background .18s ease}
+.tgl[aria-pressed="true"]{background:var(--red)}
+.tgl[aria-pressed="true"]:before{transform:translateX(38px);background:var(--white)}
+.tgl:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+
+/* ---------------- 次级标题 / 选择态 ---------------- */
+.brand.sm h1{font-family:var(--font-body);font-weight:800;font-size:24px;letter-spacing:.4px;-webkit-text-stroke:0}
+.brand.sm p{font-size:11px;letter-spacing:2px}
+.pick.active{outline:6px solid var(--red);outline-offset:-6px;background:var(--paper)}
+.pick.active .enter{color:var(--red);font-weight:800}
+.kbd-hint{font-size:11px;font-weight:700;color:var(--muted-2);letter-spacing:1px;margin-left:8px}
+.modal .body table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0 4px}
+.modal .body th,.modal .body td{border-bottom:2px solid var(--ink);padding:6px 8px;text-align:left}
+.modal .body th{background:var(--ink);color:var(--paper);font-weight:700;white-space:nowrap}
+
+/* ---------------- Boss 阶段主题 / 转场特效 ---------------- */
+#phase-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .6s ease}
+body[data-phase] #phase-bg{opacity:.55}
+body[data-phase="luna"] #phase-bg{background:radial-gradient(120% 90% at 50% 0,rgba(74,140,255,.55),transparent 62%)}
+body[data-phase="terra"] #phase-bg{background:radial-gradient(120% 90% at 50% 0,rgba(18,161,80,.5),transparent 62%)}
+body[data-phase="sol"] #phase-bg{background:radial-gradient(120% 90% at 50% 0,rgba(255,138,0,.55),transparent 62%)}
+body[data-phase="astra"] #phase-bg{background:radial-gradient(120% 90% at 50% 0,rgba(185,140,255,.55),transparent 62%)}
+body[data-phase] .side.enemy{border-top-color:var(--yellow)}
+/* 星体咏唱升级时的 Boss 改名特效：渐变扫光 + 入场聚焦（不再用全屏弹窗） */
+.boss-name.fading{
+  background:linear-gradient(100deg,#4a8cff 0%,#b98cff 30%,#ffd400 50%,#b98cff 70%,#4a8cff 100%);
+  background-size:280% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:nameIn 1.1s cubic-bezier(.2,.9,.2,1) both, nameShine 1.8s linear both;
+}
+@keyframes nameIn{
+  0%{opacity:0;filter:blur(9px);transform:translateY(-5px) scale(.9);letter-spacing:6px}
+  55%{opacity:1;filter:blur(0);transform:translateY(0) scale(1.04)}
+  100%{opacity:1;transform:none;letter-spacing:.4px}
+}
+@keyframes nameShine{from{background-position:0% 50%}to{background-position:220% 50%}}
+/* 改名瞬间给敌方卡片一个短促的高光呼吸，强化"进化了"的感觉 */
+.side.enemy.flash{animation:sideFlash 1.1s ease both}
+@keyframes sideFlash{0%,100%{box-shadow:var(--shadow)}45%{box-shadow:0 0 0 3px var(--yellow),8px 8px 0 var(--ink)}}
+.side.enemy.flash:after{content:"";position:absolute;left:0;right:0;top:0;height:72%;pointer-events:none;
+  background:radial-gradient(58% 92% at 50% 0,rgba(185,140,255,.38),rgba(74,140,255,.18) 45%,transparent 72%);
+  animation:sideGlow 1.2s ease both}
+@keyframes sideGlow{0%{opacity:0}38%{opacity:1}100%{opacity:0}}
+
+/* —— 阶段全屏弹窗（LUNA / TERRA / SOL / ASTRA / STAR BLAST）已按反馈停用，规则留着便于恢复 ——
+.phase-overlay{position:fixed;inset:0;z-index:45;display:grid;place-items:center;padding:16px;background:rgba(8,8,12,.74);animation:fadein .28s ease both}
+.phase-card{text-align:center;max-width:92vw;padding:26px 34px;border:3px solid rgba(255,255,255,.85)}
+.phase-card .pv{font-family:var(--font-disp);font-size:clamp(34px,9vw,64px);letter-spacing:10px;line-height:1}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+*/
+body.shake #app{animation:shake .5s ease}
+@keyframes shake{10%,90%{transform:translateX(-4px)}20%,80%{transform:translateX(6px)}30%,50%,70%{transform:translateX(-10px)}40%,60%{transform:translateX(10px)}}
+@media (prefers-reduced-motion:reduce){.boss-name.fading,.side.enemy.flash,body.shake #app{animation:none}}
+
+/* ---------------- 手机版 ---------------- */
+@media (max-width:860px){
+  .modes,.pickgrid{grid-template-columns:1fr}
+  .brand h1{font-size:30px}
+  .logo{width:46px;height:46px;font-size:26px}
+  .quickrules{columns:1}
+  .art.square{width:250px;height:250px}
+  .art.tall{width:196px;height:392px}
+}
+@media (max-width:620px){
+  #app{padding:0 10px 104px}
+  .arena{grid-template-columns:1fr;gap:8px}
+  .brand h1{font-size:25px;-webkit-text-stroke:1px var(--ink)}
+  .card,.actions,.resolve{padding:12px}
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .abtn small{display:none}
+  .cta{width:100%;text-align:center}
+  /* 顶栏压成一行，把纵向空间让给战场 */
+  .topbar{gap:8px;margin:8px 0 10px;flex-wrap:nowrap}
+  .topbar .spacer{display:block}
+  .topbar .row{gap:6px}
+  .brand{gap:8px}
+  .brand.sm h1{font-size:16px;-webkit-text-stroke:0;letter-spacing:0}
+  .brand.sm p{display:none}
+  .ghost{padding:8px 10px;font-size:12px;letter-spacing:0}
+  .iconbtn,.back{width:40px;height:40px}
+  .iconbtn svg,.back svg{width:20px;height:20px}
+  .logo{width:36px;height:36px;font-size:20px}
+  .art.square{width:100%;max-width:300px;height:auto;aspect-ratio:1/1}
+  .art.tall{width:min(70vw,220px);height:auto;aspect-ratio:1/2}
+  /* 出招表在手机上收成两行：动作 + 消耗 一行，效果一行 */
+  .movetable li{grid-template-columns:1fr auto;gap:2px 8px;padding:8px 0}
+  .movetable li b{font-size:14px}
+  .movetable li em{justify-self:end}
+  .movetable li small{grid-column:1 / -1;font-size:11.5px}
+  .letter{border-left-width:4px;padding-left:12px}
+  .letter p{font-size:13px;line-height:1.95}
+  .result-hero .big{font-size:38px}
+
+  /* ============ 手机版战场：目标是一屏之内同时看到「双方状态 + 技能 + 攒资源按钮」 ============ */
+  .side{padding:8px 10px}
+  .side.enemy,.side.me{border-top-width:6px}
+  .sidehead{gap:8px;margin-bottom:6px}
+  .art.small{width:44px;height:44px;box-shadow:3px 3px 0 var(--ink)}
+  .sidehead h3{font-size:15px;letter-spacing:0}
+  .sidehead .sub{font-size:9px;letter-spacing:0}
+  .pill{font-size:10px;padding:2px 6px}
+  .hp{gap:3px}
+  .hp .hpcell{height:12px;border-width:1.5px}
+  .hpline{margin-top:3px;gap:6px}
+  .hpnum{font-size:14px}
+  .hpline .muted{font-size:10px}
+  /* 资源格压成一行小方块：数字 + 简称 */
+  .res{gap:5px;margin-top:6px}
+  .chip{padding:2px 4px;display:flex;align-items:center;justify-content:center;gap:4px}
+  .chip b{font-size:13px;line-height:1.1}
+  .chip .lab{font-size:10px}
+  .side .buffs{margin-top:6px;gap:4px}
+  .buff{font-size:10px;padding:2px 6px}
+  /* 技能名改成横排小标签，不再各占一行 */
+  .skills{margin-top:6px;gap:5px;flex-direction:row;flex-wrap:wrap}
+  .skills li{font-size:11px;padding:3px 7px;gap:5px}
+  .skills li:before{width:7px;height:7px}
+  .skills li small{margin-left:0;font-size:9.5px}
+  /* 本回合结算压紧，超长时内部滚动而不是把按钮推下去 */
+  .center{margin:8px 0;gap:8px}
+  .resolve .ribbon{margin-bottom:6px}
+  .resolve .vs{font-size:12.5px;gap:6px}
+  .resolve .notes{max-height:58px;overflow:auto;margin-top:4px}
+  .resolve .notes li{font-size:11.5px;line-height:1.6}
+  .actions{padding:10px}
+  .actions .group h4{font-size:13px}
+  .abtn{min-height:56px;padding:8px}
+  .abtn b{font-size:13.5px}
+  /* 攒资源交给底部悬浮条，动作区不再重复一遍，省下的空间全给攻击键 */
+  .group.g-gather{display:none}
+  .group.g-combo .grid{grid-template-columns:repeat(2,1fr)}
+  .log{margin-top:12px!important}
+  .log ol{max-height:190px}
+
+  /* 手机底部悬浮快捷条：4 个积攒按钮做大，拇指区随手就能点 */
+  .quickbar{display:grid;position:fixed;left:0;right:0;bottom:0;z-index:20;grid-template-columns:repeat(5,1fr);gap:6px;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:var(--white);border-top:4px solid var(--ink);
+    box-shadow:0 -6px 0 rgba(13,13,15,.12)}
+  .quickbar button{border:var(--line);background:var(--paper);color:var(--ink);font-weight:800;font-size:13px;min-height:60px;
+    box-shadow:3px 3px 0 var(--ink);cursor:pointer;display:grid;place-items:center;line-height:1.15}
+  .quickbar button b{font-family:var(--font-body);font-weight:800;font-size:15px;letter-spacing:0;display:block}
+  .quickbar button small{font-size:10.5px;color:var(--muted);font-weight:700}
+  .quickbar button.more{background:var(--red);color:#fff}
+  .quickbar button.more small{color:#ffd9dc}
+  .quickbar button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+  .quickbar button[disabled]{opacity:.42}
+  .toast{bottom:92px}
+}
+
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"><i class="w1"></i><i class="w2"></i><i class="dots"></i></div>
+  <div id="app"></div>
+  <script>
+
+  </script>
+  <script>
+/* 波波攒 —— 对局引擎（浏览器 / Node 同构）
+ *
+ * 必须与 bobozan/py/engine.py 完全一致：
+ *   - ACTION_IDS 顺序
+ *   - FEATURE_NAMES / DYNAMIC_FEATURES 顺序
+ *   - 结算顺序（同时出招 -> 同时扣资源 -> 同时判定伤害）
+ * 由 bobozan/tools/parity.py 做数值一致性校验。
+ */
+(function (root) {
+  "use strict";
+
+  const ACTION_IDS = [
+    "gatherA", "gatherB", "gatherC", "gatherD",
+    "smallKnife", "energyWave", "longKnife", "shockWave",
+    "holyShield", "auraBlade", "guardSword", "vacuumWave",
+    "dragon", "apocalypse",
+    "bossStrike", "bossReset", "nothing",
+  ];
+  const NACT = ACTION_IDS.length;
+  const ACT = {};
+  ACTION_IDS.forEach((id, i) => { ACT[id] = i; });
+
+  const ACTION_CN = {
+    gatherA: "锻铁", gatherB: "攒气", gatherC: "架盾", gatherD: "屏障",
+    smallKnife: "小刀", energyWave: "能量波", longKnife: "长刀", shockWave: "冲击波",
+    holyShield: "圣盾阵", auraBlade: "气刃斩", guardSword: "卫护剑", vacuumWave: "真空波",
+    dragon: "降龙十八掌", apocalypse: "毁天灭地",
+    bossStrike: "豆馅打击", bossReset: "重置卡", nothing: "空过",
+  };
+
+  const MAX_RES = 5, MAX_HP = 5, TURN_LIMIT = 60;
+  const DOUBAO_CORRECTIONS = 2;   // 豆包【对不起，是我算错了…】每场可用次数
+  const CHATGPT_PRE_TURNS = 2;    // ChatGPT【我是首先的】开局额外回合数
+  // ChatGPT（认真）：【星体咏唱】+【重置卡】+【星体爆轰】
+  const STAR_PERIOD = 9;                          // 每次咏唱相隔 9 回合
+  const STAR_GRANT = [2, 3, 4, 5];                // Luna 随机 2 种、Terra 随机 3 种、Sol 四种各 +1、Astra 四种各 +5
+  const STAR_PHASE_KEYS = ["luna", "terra", "sol", "astra"];
+  const STAR_PHASE_NAMES = ["GPT-5.6 Luna", "GPT-5.6 Terra", "GPT-5.6 Sol", "GPT-6 Astra"];
+  const RESET_CARD_DELAY = 5;                     // 【重置卡】让尚未结算的咏唱整体延后 5 回合
+  const RESET_CARD_HP_GATE = 3.5;                 // 【重置卡】体力 ≤ 3.5 才能用
+  const BURST_DAMAGE = 4;                         // 「对手攒得起爆发」判定线（降龙十八掌 4 伤）
+  // 反龟缩规则：对手连续若干回合在「攒已经满了的资源」（纯空转，资源没有增长也没有攻击）
+  // → 判定为龟缩/复读，给「囤 A/B + 进攻」的动作加分。
+  // 注意：触发条件刻意不用「N 回合没攻击」——正常打的时候玩家也会连续攒几回合，那样会误伤。
+  const RULES = { passiveStreakTurns: 2, passiveBonus: 1.4 };   // 可在测试里临时关掉（BOBO.RULES）
+  const PASSIVE_BOOST = new Uint8Array(NACT);
+  [ACT.gatherA, ACT.gatherB, ACT.smallKnife, ACT.energyWave, ACT.longKnife, ACT.shockWave,
+    ACT.auraBlade, ACT.guardSword, ACT.vacuumWave, ACT.dragon, ACT.apocalypse]
+    .forEach((a) => { PASSIVE_BOOST[a] = 1; });
+  const STAR_BLAST_DAMAGE = 99;                   // 【星体爆轰】无法防御的伤害
+  const RES_CN = ["钢铁", "聚气", "盾", "屏"];
+  const RES_LETTER = ["A", "B", "C", "D"];
+
+  // 索引: 0..3 = A/B/C/D
+  const COST = mk(), GAIN = mk(), DEF_B = new Uint8Array(NACT), DEF_Q = new Uint8Array(NACT),
+    DEF_ALL = new Uint8Array(NACT), HP_COST = new Float32Array(NACT),
+    DMG = new Float32Array(NACT), ATK = new Uint8Array(NACT);
+  function mk() { return [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]; }
+
+  function defAction(id, o) {
+    o = o || {};
+    const i = ACT[id];
+    if (o.cost) COST[i] = o.cost.slice();
+    if (o.gain) GAIN[i] = o.gain.slice();
+    DMG[i] = o.dmg || 0;
+    ATK[i] = o.atk || 0;
+    DEF_B[i] = o.db ? 1 : 0;
+    DEF_Q[i] = o.dq ? 1 : 0;
+    DEF_ALL[i] = o.da ? 1 : 0;
+    HP_COST[i] = o.hpCost || 0;
+  }
+  defAction("gatherA", { gain: [1, 0, 0, 0] });
+  defAction("gatherB", { gain: [0, 1, 0, 0] });
+  defAction("gatherC", { gain: [0, 0, 1, 0], db: true });
+  defAction("gatherD", { gain: [0, 0, 0, 1], dq: true });
+  defAction("smallKnife", { cost: [1, 0, 0, 0], dmg: 1, atk: 1 });
+  defAction("energyWave", { cost: [0, 1, 0, 0], dmg: 1, atk: 2 });
+  defAction("longKnife", { cost: [2, 0, 0, 0], dmg: 2, atk: 1 });
+  defAction("shockWave", { cost: [0, 2, 0, 0], dmg: 2, atk: 2 });
+  defAction("holyShield", { cost: [0, 0, 1, 1], db: true, dq: true, da: true });
+  defAction("auraBlade", { cost: [1, 1, 0, 0], dmg: 1, atk: 3 });
+  defAction("guardSword", { cost: [1, 0, 1, 0], dmg: 1.5, atk: 1, db: true });
+  defAction("vacuumWave", { cost: [0, 1, 0, 1], dmg: 1.5, atk: 2, dq: true });
+  defAction("dragon", { cost: [2, 2, 2, 2], dmg: 4, atk: 3 });
+  defAction("apocalypse", { cost: [3, 3, 3, 3], dmg: 5, atk: 4 });
+  defAction("bossStrike", { cost: [1, 1, 0, 0], dmg: 2.5, atk: 3, hpCost: 1 });
+  // 重置卡：空过一个回合 + 回满血，它不是防御动作
+  defAction("bossReset", {});
+  defAction("nothing", {});
+
+  const IS_ATTACK = new Uint8Array(NACT), IS_GATHER = new Uint8Array(NACT),
+    GATHER_ANY = new Uint8Array(NACT), DEF_ANY = new Uint8Array(NACT),
+    MULTI_ROLE = new Uint8Array(NACT), SPECIAL_ATK = new Uint8Array(NACT),
+    UNBLOCKABLE = new Uint8Array(NACT), BOSS_SKILL = new Uint8Array(NACT),
+    BOSS_ONLY = new Uint8Array(NACT);
+  const GATHER_RES = new Int8Array(NACT).fill(-1);
+  for (let a = 0; a < NACT; a++) {
+    IS_ATTACK[a] = DMG[a] > 0 ? 1 : 0;
+    IS_GATHER[a] = (GAIN[a][0] + GAIN[a][1] + GAIN[a][2] + GAIN[a][3]) > 0 ? 1 : 0;
+    GATHER_ANY[a] = IS_GATHER[a];
+    DEF_ANY[a] = (DEF_B[a] || DEF_Q[a] || DEF_ALL[a]) ? 1 : 0;
+    MULTI_ROLE[a] = (IS_ATTACK[a] && DEF_ANY[a]) ? 1 : 0;
+    SPECIAL_ATK[a] = ATK[a] === 3 ? 1 : 0;
+    UNBLOCKABLE[a] = ATK[a] === 4 ? 1 : 0;
+    for (let r = 0; r < 4; r++) if (GAIN[a][r] > 0) GATHER_RES[a] = r;
+  }
+  BOSS_SKILL[ACT.bossStrike] = 1;
+  BOSS_SKILL[ACT.bossReset] = 1;
+  BOSS_ONLY[ACT.bossStrike] = 1;
+  BOSS_ONLY[ACT.bossReset] = 1;
+  BOSS_ONLY[ACT.nothing] = 1;
+
+  const COST_TOTAL = new Float32Array(NACT);
+  for (let a = 0; a < NACT; a++) {
+    COST_TOTAL[a] = COST[a][0] + COST[a][1] + COST[a][2] + COST[a][3];
+  }
+
+  // ------------------------------------------------------- 状态特征（Q 学习）
+  // 每个动作一套线性权重 Q(s,a)=W[a]·φ(s)。特征只描述状态（含上一回合双方动作），
+  // 不含本回合出招 —— 双方同时出招，谁也读不到对方本回合要做什么。
+  const Q_FEATURES = [
+    "bias",
+    "hpSelf", "hpEnemy", "hpDiff",
+    "selfA", "selfB", "selfC", "selfD",
+    "enemyA", "enemyB", "enemyC", "enemyD",
+    "selfResTotal", "enemyResTotal",
+    "myMaxDmg", "enemyMaxDmg",
+    "hpMarginVsEnemyMax", "enemyHpMarginVsMyMax",
+    "enemyLow", "selfLow",
+    "selfCanDragon", "enemyCanDragon", "selfCanApo", "enemyCanApo",
+    "turnNorm", "selfAtkRate", "enemyAtkRate", "lastSelfAtkBlocked",
+  ];
+  const NF_BASE = Q_FEATURES.length;
+  const NF_LEGACY = NF_BASE + 2 * NACT;     // 旧版宽度（冻结基线与既有 Boss 核心）
+  // 追加在最末尾的新特征（ChatGPT 认真 的重置卡上下文）；放在 one-hot 之后，旧权重位置不变
+  const EXTRA_FEATURES = ["cardLegal", "hpAboveGate", "enemyCanBurst"];
+  const NF_EXTRA_AT = NF_LEGACY;
+  const NF = NF_LEGACY + EXTRA_FEATURES.length;
+  const FEATURE_NAMES = Q_FEATURES;
+  const STATIC_FEATURES = [];
+  const DYNAMIC_FEATURES = [];
+  const NSTATIC = 0, NDYN = 0, STATIC = [];
+
+  /** 状态特征：与 Python engine.q_features 完全一致。 */
+  function featuresFor(self, enemy, ctx) {
+    const f = new Float32Array(NF);
+    const s = self.res, e = enemy.res;
+    f[0] = 1;
+    f[1] = self.hp / 5;
+    f[2] = enemy.hp / 5;
+    f[3] = (self.hp - enemy.hp) / 5;
+    for (let r = 0; r < 4; r++) { f[4 + r] = s[r] / 5; f[8 + r] = e[r] / 5; }
+    f[12] = (s[0] + s[1] + s[2] + s[3]) / 20;
+    f[13] = (e[0] + e[1] + e[2] + e[3]) / 20;
+    f[14] = ctx.myMaxDmg / 5;
+    f[15] = ctx.enemyMaxDmg / 5;
+    f[16] = (self.hp - ctx.enemyMaxDmg) / 5;
+    f[17] = (enemy.hp - ctx.myMaxDmg) / 5;
+    f[18] = enemy.hp <= 2 ? 1 : 0;
+    f[19] = self.hp <= 2 ? 1 : 0;
+    f[20] = (s[0] >= 2 && s[1] >= 2 && s[2] >= 2 && s[3] >= 2) ? 1 : 0;
+    f[21] = (e[0] >= 2 && e[1] >= 2 && e[2] >= 2 && e[3] >= 2) ? 1 : 0;
+    f[22] = (s[0] >= 3 && s[1] >= 3 && s[2] >= 3 && s[3] >= 3) ? 1 : 0;
+    f[23] = (e[0] >= 3 && e[1] >= 3 && e[2] >= 3 && e[3] >= 3) ? 1 : 0;
+    f[24] = Math.min(ctx.turn, 60) / 60;
+    f[25] = ctx.selfAtkRate || 0;
+    f[26] = ctx.enemyAtkRate || 0;
+    f[27] = ctx.lastSelfAtkBlocked || 0;
+    if (ctx.prevSelfAction >= 0) f[NF_BASE + ctx.prevSelfAction] = 1;
+    if (ctx.prevEnemyAction >= 0) f[NF_BASE + NACT + ctx.prevEnemyAction] = 1;
+    f[NF_EXTRA_AT + 0] = ctx.cardLegal || 0;
+    f[NF_EXTRA_AT + 1] = Math.max(0, self.hp - RESET_CARD_HP_GATE) / 5;
+    f[NF_EXTRA_AT + 2] = (ctx.enemyMaxDmg >= BURST_DAMAGE) ? 1 : 0;
+    return f;
+  }
+
+  function policyScores(model, self, enemy, ctx, legal) {
+    const W = model.W, out = new Float32Array(NACT).fill(-1e9);
+    const f = featuresFor(self, enemy, ctx);
+    for (let a = 0; a < NACT; a++) {
+      if (legal && !legal[a]) continue;
+      const wa = W[a];
+      let z = 0;
+      // 按「模型自己的权重宽度」求和：旧版 62 维权重（冻结基线、既有 Boss 核心）会自动忽略新增的 3 维，
+      // 决策函数与训练时完全一致；新版 65 维权重则用上全部特征。
+      for (let k = 0; k < wa.length; k++) z += f[k] * wa[k];
+      out[a] = z;
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------- 普通难度 Bot（V8）
+  // 已按需求删掉「铁壁反击」这一防守战术
+  const STRATEGY_IDS = ["blade_rush", "wave_pressure", "four_symbols_burst", "adaptive_mind"];
+  const S_JITTER = [8, 8, 6, 12];
+  const S_RES_PREF = [
+    [8, 0, 3, 1], [1, 8, 1, 3], [5, 5, 5, 5], [0, 0, 0, 0],
+  ];
+  const GEN_ATK = new Float32Array(NACT), GEN_KILL = new Float32Array(NACT);
+  const S_ATK_PREF = STRATEGY_IDS.map(() => new Float32Array(NACT));
+  function setPref(s, entries) { entries.forEach(([id, v]) => { S_ATK_PREF[s][ACT[id]] = v; }); }
+  setPref(0, [["smallKnife", 30], ["longKnife", 55], ["guardSword", 50], ["auraBlade", 20], ["dragon", 30], ["apocalypse", 100]]);
+  setPref(1, [["energyWave", 30], ["shockWave", 55], ["vacuumWave", 50], ["auraBlade", 25], ["dragon", 30], ["apocalypse", 100]]);
+  setPref(2, [["dragon", 150], ["apocalypse", 300], ["auraBlade", 40], ["guardSword", 35], ["vacuumWave", 35]]);
+  setPref(3, [["smallKnife", 25], ["energyWave", 25], ["longKnife", 45], ["shockWave", 45], ["auraBlade", 55],
+  ["guardSword", 45], ["vacuumWave", 45], ["dragon", 70], ["apocalypse", 120]]);
+  [["smallKnife", 30, 400], ["energyWave", 30, 400], ["longKnife", 60, 500], ["shockWave", 60, 500],
+  ["guardSword", 50, 400], ["vacuumWave", 50, 400], ["auraBlade", 40, 400], ["dragon", 120, 900],
+  ["apocalypse", 200, 1000]].forEach(([id, b, k]) => { GEN_ATK[ACT[id]] = b; GEN_KILL[ACT[id]] = k; });
+
+  function normalBotScores(self, enemy, strat, rng) {
+    const s = new Float32Array(NACT);
+    const e = enemy.res, me = self.res;
+    const threatA = e[0] >= 2 ? 1 : 0, threatB = e[1] >= 2 ? 1 : 0;
+    const combo = (e[0] >= 1 && e[1] >= 1) ? 1 : 0;
+    const heavy = (e[0] >= 3 || e[1] >= 3 || combo) ? 1 : 0;
+    for (let a = 0; a < NACT; a++) {
+      if (!IS_ATTACK[a]) continue;
+      const lethal = DMG[a] >= enemy.hp - 1e-6;
+      s[a] += lethal ? GEN_KILL[a] : GEN_ATK[a];
+    }
+    // 防御评分整体压低：普通难度 Bot 不再走防守路线
+    s[ACT.gatherC] += 15 * threatA;
+    s[ACT.gatherD] += 15 * threatB;
+    s[ACT.holyShield] += 25 * heavy + 10 * ((threatA + threatB) > 0 ? 1 : 0);
+    s[ACT.guardSword] += 30 * threatA;
+    s[ACT.vacuumWave] += 30 * threatB;
+    ["gatherA", "gatherB", "gatherC", "gatherD"].forEach((id, r) => {
+      const gap = (MAX_RES - me[r]) / MAX_RES;
+      s[ACT[id]] += 20 + 30 * gap;
+      if (me[r] >= MAX_RES) s[ACT[id]] -= 80;
+    });
+    for (let a = 0; a < NACT; a++) {
+      if (IS_ATTACK[a] && DMG[a] >= enemy.hp - 1e-6) continue;
+      s[a] -= 3 * COST_TOTAL[a] + 5 * (COST[a][2] + COST[a][3]);
+    }
+    ["gatherA", "gatherB", "gatherC", "gatherD"].forEach((id, r) => {
+      const nd = Math.max(0, 2 - me[r]), na = Math.max(0, 3 - me[r]);
+      if (nd === 1 || na === 1) s[ACT[id]] += 20;
+    });
+    ["gatherA", "gatherB", "gatherC", "gatherD"].forEach((id, r) => { s[ACT[id]] += S_RES_PREF[strat][r]; });
+    for (let a = 0; a < NACT; a++) s[a] += S_ATK_PREF[strat][a];
+    const selfLow2 = self.hp <= 2 ? 1 : 0, enemyLow2 = enemy.hp <= 2 ? 1 : 0,
+      enemyLow1 = enemy.hp <= 1 ? 1 : 0, enemyCD = (e[2] + e[3] >= 2) ? 1 : 0;
+    const enemyRich = (e[0] >= 3 || e[1] >= 3 || e[2] >= 3 || e[3] >= 3) ? 1 : 0;
+    for (let a = 0; a < NACT; a++) {
+      if (IS_ATTACK[a]) {
+        s[a] += 40 * selfLow2 + 80 * enemyLow2 + 200 * enemyLow1;
+        if (DMG[a] < 2) s[a] += 20 * enemyCD;
+      }
+      if (IS_GATHER[a]) s[a] += 20 * enemyCD;
+    }
+    s[ACT.holyShield] += 20 * enemyCD;
+    if (strat === 2) {  // four_symbols_burst
+      const cond = (self.hp <= 3 || (e[0] + e[1]) >= 1 || e[0] >= 3 || e[1] >= 3) ? 1 : 0;
+      s[ACT.holyShield] += 100 * cond - 50 * enemyRich + 150 * (self.hp <= 1 ? 1 : 0);
+      for (let a = 0; a < NACT; a++) if (IS_ATTACK[a]) s[a] += 200 * enemyRich;
+    }
+    if (strat === 3) {  // adaptive_mind
+      const condA = (e[0] >= 2 && e[1] < 2) ? 1 : 0, condB = (e[1] >= 2 && e[0] < 2) ? 1 : 0;
+      s[ACT.gatherA] += 70 * condA;
+      s[ACT.gatherD] += 70 * condB;
+      s[ACT.guardSword] += 60 * condA;
+      s[ACT.vacuumWave] += 60 * condB;
+      s[ACT.holyShield] += 60 * (condA + condB > 0 ? 1 : 0) + 100 * combo - 80 * enemyRich;
+      for (let a = 0; a < NACT; a++) {
+        if (DEF_ANY[a]) s[a] += 40 * combo;
+        if (IS_ATTACK[a]) s[a] += 60 * enemyRich;
+      }
+    }
+    if (strat === 0 || strat === 1 || strat === 3) {
+      const noRes = ((e[0] + e[1]) === 0) ? 1 : 0;
+      const poorme = (me[0] + me[1] + me[2] + me[3] <= 2) ? 1 : 0;
+      for (let a = 0; a < NACT; a++) if (IS_GATHER[a]) s[a] += 35 * noRes + 30 * poorme;
+    }
+    (rng || Math.random)();
+    return s;
+  }
+
+  // ------------------------------------------------------------- 合法 / 结算
+  function canAfford(res, hp, a) {
+    for (let r = 0; r < 4; r++) if (res[r] < COST[a][r]) return false;
+    if (HP_COST[a] > 0 && hp <= 1) return false;
+    return true;
+  }
+
+  function legalMask(res, hp, allowBoss) {
+    const out = new Uint8Array(NACT);
+    for (let a = 0; a < NACT; a++) {
+      if (BOSS_ONLY[a] && !(allowBoss && allowBoss[a])) continue;
+      if (canAfford(res, hp, a)) out[a] = 1;
+    }
+    return out;
+  }
+
+  function bossAllow(side, allowBossIds) {
+    if (!allowBossIds) return null;
+    const m = new Uint8Array(NACT);
+    allowBossIds.forEach((id) => { if (side.avail && side.avail[id]) m[ACT[id]] = 1; });
+    return m;
+  }
+
+  function blocked(atkAction, defAction) {
+    const t = ATK[atkAction];
+    if (t === 0 || t === 4) return false;
+    if (t === 1) return !!DEF_B[defAction];
+    if (t === 2) return !!DEF_Q[defAction];
+    return !!DEF_ALL[defAction];   // t === 3 特殊系
+  }
+
+  function applyTurn(res, hp, act, mult, free) {
+    const newRes = [res[0].slice(), res[1].slice()];
+    for (let s = 0; s < 2; s++) {
+      const a = act[s];
+      const noCost = !!(free && free[s]);
+      for (let r = 0; r < 4; r++) {
+        const cost = noCost ? 0 : COST[a][r];
+        newRes[s][r] = Math.max(0, Math.min(MAX_RES, res[s][r] + GAIN[a][r] - cost));
+      }
+    }
+    const b0 = blocked(act[1], act[0]), b1 = blocked(act[0], act[1]);
+    const dmg = [
+      b0 ? 0 : DMG[act[1]] * mult[0],
+      b1 ? 0 : DMG[act[0]] * mult[1],
+    ];
+    const newHp = [
+      Math.max(0, hp[0] - HP_COST[act[0]] - dmg[0]),
+      Math.max(0, hp[1] - HP_COST[act[1]] - dmg[1]),
+    ];
+    return { res: newRes, hp: newHp, dmg: dmg, blocked: [b0, b1] };
+  }
+
+  // -------------------------------------------------------------- 玩家 / Boss
+  function actionCostText(id) {
+    const i = ACT[id], parts = [];
+    for (let r = 0; r < 4; r++) if (COST[i][r]) parts.push(COST[i][r] + RES_LETTER[r]);
+    if (HP_COST[i]) parts.push(HP_COST[i] + "HP");
+    return parts.join("+");
+  }
+  function actionGainText(id) {
+    const i = ACT[id], parts = [];
+    for (let r = 0; r < 4; r++) if (GAIN[i][r]) parts.push("+" + GAIN[i][r] + RES_LETTER[r]);
+    return parts.join("");
+  }
+  function actionKind(id) {
+    if (IS_GATHER[ACT[id]]) return "gather";
+    const a = ACT[id];
+    if ([ACT.smallKnife, ACT.energyWave, ACT.longKnife, ACT.shockWave].includes(a)) return "basic";
+    return "combo";
+  }
+
+  // 动作分组（UI 用）
+  const ACTION_GROUPS = [
+    { key: "gather", title: "积攒", ids: ["gatherA", "gatherB", "gatherC", "gatherD"] },
+    { key: "basic", title: "基础攻击", ids: ["smallKnife", "energyWave", "longKnife", "shockWave"] },
+    {
+      key: "combo", title: "组合进阶",
+      ids: ["holyShield", "auraBlade", "guardSword", "vacuumWave", "dragon", "apocalypse"],
+    },
+  ];
+
+  const BOSSES = {
+    deepseek: {
+      id: "deepseek", name: "Boss DeepSeek", subtitle: "峰谷定价 · 吃白饭",
+      portrait: "assets/boss_deepseek.png",
+      skills: [
+        { name: "峰谷定价", desc: "开局读取本地时间（北京时间工作日 9:00–12:00、14:00–18:00）：命中则【梁文峰】，Boss 伤害 ×2；否则【梁文谷】，玩家伤害 ×0.5。" },
+        { name: "吃白饭", desc: "每回合 5% 概率触发（负面技能）：该回合 Boss 视为没有做出任何动作。" },
+      ],
+    },
+    chatgpt: {
+      id: "chatgpt", name: "Boss ChatGPT", subtitle: "我是首先的 · 重置卡",
+      portrait: "assets/boss_chatgpt.png",
+      skills: [
+        { name: "我是首先的", desc: "一场战斗限一次：对战开始前，Boss 先进行 2 个额外的回合（白拿 2 次行动）。" },
+        { name: "重置卡", desc: "一场战斗限一次：Boss 空过一个回合并把体力回满。注意它不提供任何防御 —— 如果这回合被打死就回不了血。" },
+      ],
+    },
+    doubao: {
+      id: "doubao", name: "Boss 豆包", subtitle: "豆馅打击 · 我算错了",
+      portrait: "assets/boss_doubao.png",
+      skills: [
+        { name: "豆馅打击", desc: "一场战斗限一次，花费 1A + 1B + 1 点体力，使出只能被圣盾阵防御的攻击，造成 2.5 伤害。" },
+        { name: "对不起，是我算错了…", desc: "一场战斗可用 2 次：受到伤害时，可更改本回合出招为正确的防御招式（刀系→架盾，气系→屏障，特殊系→圣盾阵）。" },
+      ],
+    },
+    chatgpt_serious: {
+      id: "chatgpt_serious", name: "Boss ChatGPT（认真）", subtitle: "重置卡 CD15 · 星体咏唱",
+      portrait: "assets/boss_chatgpt_serious.png",
+      skills: [
+        {
+          name: "重置卡（一场战斗限一次）",
+          desc: "使用条件：一场战斗限一次、自身体力 ≤ 3.5、且「你本回合最大可能伤害 < 它的体力」（也就是说它只在你打不死它的回合交牌）。"
+            + "使用后把体力回满；代价是让尚未结算的【星体咏唱】整体延后 5 回合，而且这一回合它不攻击也不防御。",
+        },
+        {
+          name: "星体咏唱",
+          desc: "第 1 回合咏唱【Luna】：随机 2 种资源各 +1，名字变为 GPT-5.6 Luna；9 回合后【Terra】：随机 3 种资源各 +1 → GPT-5.6 Terra；"
+            + "再 9 回合后【Sol】：ABCD 各 +1 → GPT-5.6 Sol；再 9 回合后【Astra】：ABCD 各 +5 → GPT-6 Astra，"
+            + "并在下一回合强制释放【星体爆轰】，对玩家造成无法防御的 99 点伤害。",
+        },
+      ],
+    },
+  };
+
+  // 「通常 / 认真」形态：目前只有 ChatGPT 有认真形态（星体咏唱版），
+  // DeepSeek 与豆包的认真形态尚未开放（界面上锁死，显示「将在未来开放」）。
+  const BOSS_MODES = {
+    deepseek: { normal: { id: "deepseek" } },
+    chatgpt: { normal: { id: "chatgpt" }, serious: { id: "chatgpt_serious" } },
+    doubao: { normal: { id: "doubao" } },
+  };
+  const BOSS_LIST = ["deepseek", "chatgpt", "doubao"];
+  // 该 Boss 是否已开放「认真」形态（未开放的开关锁死）
+  const BOSS_SERIOUS_READY = { deepseek: false, chatgpt: true, doubao: false };
+
+  // ------------------------------------------------------------- 对局驱动
+  function makeSide(o) {
+    return Object.assign({
+      name: "对手", kind: "ai", hp: MAX_HP, maxHp: MAX_HP, res: [0, 0, 0, 0],
+      prevAction: -1, atkRate: 0, lastAtkBlocked: 0, noAtkStreak: 0,
+      wastedGatherStreak: 0,
+      model: null, strategy: null, boss: null, avail: {}, used: {}, isHuman: false,
+    }, o);
+  }
+
+  function createBattle(opts) {
+    opts = opts || {};
+    // 「通常 / 认真」：认真形态可能换成另一套 Boss 配置（ChatGPT 认真 = 星体咏唱版）
+    const mode = opts.serious ? "serious" : "normal";
+    const modeCfg = (opts.bossId && BOSS_MODES[opts.bossId]) ? BOSS_MODES[opts.bossId][mode] : null;
+    const bossId = modeCfg ? modeCfg.id : (opts.bossId || null);
+    const bossDef = bossId ? BOSSES[bossId] : null;
+    const player = makeSide({ name: opts.playerName || "你", kind: "human", isHuman: true });
+    let enemy;
+    if (bossDef) {
+      enemy = makeSide({
+        name: bossDef.name, kind: "boss", boss: bossId, bossDef: bossDef, subtitle: bossDef.subtitle,
+        // 豆包【我算错了】每场可用 2 次，所以 correction 用次数而不是开关
+        model: opts.bossModel || null, eps: 0.05,
+        avail: { bossStrike: 1, bossReset: 1, correction: DOUBAO_CORRECTIONS },
+      });
+      enemy.baseBossId = opts.bossId;                                 // 原始 Boss（用于 CLEAR 记录）
+      enemy.serious = !!(opts.serious && modeCfg && modeCfg.id !== opts.bossId);
+    } else if (opts.difficulty === "veteran") {
+      // 历战 AI 支持「策略池」：每局随机抽一个训练好的子策略（对手看不到抽到哪一个）
+      const pool = (opts.veteranModels && opts.veteranModels.filter(Boolean)) || [];
+      const pick = pool.length ? pool[Math.floor(Math.random() * pool.length)] : (opts.veteranModel || null);
+      enemy = makeSide({
+        name: "历战 AI", kind: "veteran", model: pick,
+        poolSize: pool.length || 1, eps: 0.05,
+      });
+    } else {
+      const strat = opts.strategy != null ? opts.strategy
+        : Math.floor(Math.random() * STRATEGY_IDS.length);
+      enemy = makeSide({ name: "普通 AI", kind: "normal", strategy: strat });
+    }
+    const state = {
+      mode: bossDef ? "boss" : "normal",
+      bossId: bossId, bossDef: bossDef,
+      difficulty: opts.difficulty || "normal",
+      sides: [player, enemy],
+      turn: 0, records: [], finished: false, result: null,
+      mult: [1, 1],
+      preTurn: null,
+      realtime: !!opts.realtime,
+      notes: [],
+    };
+    if (bossId === "deepseek") {
+      const peak = isPeakTime(opts.now || new Date());
+      state.deepseekState = peak ? "peak" : "valley";
+      if (peak) { state.mult[0] = 2; state.notes.push("【峰谷定价】梁文峰：Boss 的伤害加倍"); }
+      else { state.mult[1] = 0.5; state.notes.push("【峰谷定价】梁文谷：你对 Boss 的伤害减半"); }
+      enemy.skillUsed = { "峰谷定价": true };
+    }
+    if (bossId === "chatgpt") {
+      const recs = [];
+      for (let i = 0; i < CHATGPT_PRE_TURNS; i++) recs.push(runPreTurn(state, i));
+      state.preTurn = recs[0];
+      state.preTurns = recs;
+      state.notes.push("【我是首先的】触发：ChatGPT 是第一个面世的 AI 产品，所以她永远可以提前准备两回合。");
+      enemy.skillUsed = Object.assign(enemy.skillUsed || {}, { "我是首先的": true });
+    }
+    if (bossId === "chatgpt_serious") {
+      state.star = starInit(state);
+      enemy.name = "Boss ChatGPT（认真）";
+      enemy.skillUsed = Object.assign(enemy.skillUsed || {}, {});
+    }
+    if (state.sides[1].kind === "boss" || state.sides[1].kind === "veteran") { /* AI 模型就绪 */ }
+    return state;
+  }
+
+  /** 北京时间工作日 9:00–12:00（含 9:00，不到 12:00）、14:00–18:00。 */
+  function isPeakTime(now) {
+    let bj;
+    try {
+      bj = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" }));
+    } catch (e) { bj = now; }
+    const day = bj.getDay();               // 0 周日, 6 周六
+    if (day === 0 || day === 6) return false;
+    const h = bj.getHours() + bj.getMinutes() / 60;
+    return (h >= 9 && h < 12) || (h >= 14 && h < 18);
+  }
+
+  function sideCtx(state, sideIdx) {
+    const me = state.sides[sideIdx], foe = state.sides[1 - sideIdx];
+    const myLegal = legalFor(state, sideIdx);
+    const foeLegal = legalFor(state, 1 - sideIdx);
+    const maxOf = (lg) => {
+      let m = 0;
+      for (let a = 0; a < NACT; a++) if (lg[a]) m = Math.max(m, DMG[a]);
+      return m;
+    };
+    return {
+      turn: Math.max(1, state.turn + 1),
+      prevSelfAction: me.prevAction,
+      prevEnemyAction: foe.prevAction,
+      myMaxDmg: maxOf(myLegal),
+      enemyMaxDmg: maxOf(foeLegal),
+      selfAtkRate: me.atkRate,
+      enemyAtkRate: foe.atkRate,
+      lastSelfAtkBlocked: me.lastAtkBlocked,
+      cardLegal: legalFor(state, sideIdx)[ACT.bossReset] ? 1 : 0,
+    };
+  }
+
+  /** 只按资源计算的合法集（用于「对手本回合最大可能伤害」，不含重置卡的使用条件）。 */
+  function baseLegalFor(state, sideIdx) {
+    const s = state.sides[sideIdx];
+    const allow = new Uint8Array(NACT);
+    if (s.kind === "boss") {
+      if (s.boss === "doubao" && s.avail.bossStrike) allow[ACT.bossStrike] = 1;
+      if ((s.boss === "chatgpt" || s.boss === "chatgpt_serious") && s.avail.bossReset) allow[ACT.bossReset] = 1;
+    }
+    return legalMask(s.res, s.hp, allow);
+  }
+
+  function maxDamageOf(legal) {
+    let m = 0;
+    for (let a = 0; a < NACT; a++) if (legal[a]) m = Math.max(m, DMG[a]);
+    return m;
+  }
+
+  function legalFor(state, sideIdx) {
+    const s = state.sides[sideIdx];
+    const allowIds = s.kind === "boss" && s.boss
+      ? (s.boss === "doubao" ? ["bossStrike"]
+        : ((s.boss === "chatgpt" || s.boss === "chatgpt_serious") ? ["bossReset"] : []))
+      : [];
+    const allow = new Uint8Array(NACT);
+    allowIds.forEach((id) => { if (s.avail[id]) allow[ACT[id]] = 1; });
+    // ChatGPT（认真）的【重置卡】：一场限一次 + 体力 ≤ 3.5 + 对手本回合打不死我（安全才交牌）
+    if (s.boss === "chatgpt_serious") {
+      if (s.hp > RESET_CARD_HP_GATE + 1e-6) allow[ACT.bossReset] = 0;
+      if (state.star && state.star.usedReset) allow[ACT.bossReset] = 0;
+      const oppMax = maxDamageOf(baseLegalFor(state, 1 - sideIdx));
+      if (oppMax >= s.hp - 1e-6) allow[ACT.bossReset] = 0;
+    }
+    return legalMask(s.res, s.hp, allow);
+  }
+
+  function pickAiAction(state, sideIdx, rng) {
+    const side = state.sides[sideIdx], foe = state.sides[1 - sideIdx];
+    const legal = legalFor(state, sideIdx);
+    const ctx = sideCtx(state, sideIdx);
+    const r = rng || Math.random;
+    if (side.kind === "normal") {
+      const sc = normalBotScores(side, foe, side.strategy, r);
+      const jit = S_JITTER[side.strategy];
+      let best = -1e9, bestA = 0;
+      for (let a = 0; a < NACT; a++) {
+        if (!legal[a]) continue;
+        const v = sc[a] + (r() * 2 - 1) * jit;
+        if (v > best) { best = v; bestA = a; }
+      }
+      return bestA;
+    }
+    const model = side.model;
+    if (!model) {  // 没有权重时退化为随机（不应发生）
+      const pool = [];
+      for (let a = 0; a < NACT; a++) if (legal[a]) pool.push(a);
+      return pool[Math.floor(r() * pool.length)];
+    }
+    const sc = policyScores(model, side, foe, ctx, legal);
+    // 反龟缩：对手连续几回合在空转攒资源时，改为「囤 A/B + 主动进攻」
+    if ((foe.wastedGatherStreak || 0) >= RULES.passiveStreakTurns) {
+      for (let a = 0; a < NACT; a++) {
+        if (legal[a] && PASSIVE_BOOST[a]) sc[a] += RULES.passiveBonus;
+      }
+    }
+    // 与训练一致的决策规则：ε-greedy（ε 默认 5%），其余情况取 Q 值最高的合法动作。
+    // 注意：Q 值是「分数」而不是概率，必须用 argmax 而不是 softmax 采样，否则会退化成乱出招。
+    const eps = side.eps != null ? side.eps : 0.02;
+    if (r() < eps) {
+      const pool = [];
+      for (let a = 0; a < NACT; a++) if (legal[a]) pool.push(a);
+      return pool[Math.floor(r() * pool.length)];
+    }
+    let best = -1e9, bestA = -1;
+    for (let a = 0; a < NACT; a++) {
+      if (!legal[a]) continue;
+      if (sc[a] > best) { best = sc[a]; bestA = a; }
+    }
+    if (bestA >= 0) return bestA;
+    for (let a = 0; a < NACT; a++) if (legal[a]) return a;
+    return ACT.nothing;
+  }
+
+  function ensureBossModels() { return true; }
+
+  // ---------------------------------------------------------- ChatGPT（认真）技能
+  /** 星体咏唱的资源奖励：k=2/3 → 随机 k 种各 +1；k=4 → 四种各 +1；k=5 → 四种拉满。 */
+  function starGrant(side, k) {
+    const idx = [0, 1, 2, 3];
+    for (let i = idx.length - 1; i > 0; i--) {          // 洗牌
+      const j = Math.floor(Math.random() * (i + 1));
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+    if (k >= 5) { side.res = [MAX_RES, MAX_RES, MAX_RES, MAX_RES]; return; }
+    const pick = k === 4 ? idx : idx.slice(0, k);
+    pick.forEach((r) => { side.res[r] = Math.min(MAX_RES, side.res[r] + 1); });
+  }
+
+  /** 初始化星体咏唱状态：第 1 回合的 Luna 会在第一次出招时结算。 */
+  function starInit(state) {
+    const boss = state.sides[1];
+    if (boss.boss !== "chatgpt_serious") return null;
+    return { phase: -1, next: 1, usedReset: false, blast: -1, log: [] };
+  }
+
+  /** 回合开始时检查是否到咏唱点；返回本回合的事件提示。 */
+  function starTick(state) {
+    const st = state.star;
+    if (!st) return [];
+    const turn = state.turn + 1;
+    const notes = [];
+    const boss = state.sides[1];
+    if (st.phase < 3 && turn >= st.next) {
+      st.phase += 1;
+      const k = STAR_GRANT[st.phase];
+      starGrant(boss, k);
+      boss.name = STAR_PHASE_NAMES[st.phase];
+      boss.phaseKey = STAR_PHASE_KEYS[st.phase];
+      if (st.phase === 3) {
+        st.blast = turn + 1;
+        notes.push("【星体咏唱：Astra】：星星，排列好了。现在在你面前的是 GPT-6 Astra。");
+      } else {
+        const label = STAR_PHASE_NAMES[st.phase].split(" ")[1];
+        const flavor = {
+          Luna: "ChatGPT 开始「星体咏唱」，宇宙将回应她的意志。现在在你面前的是 GPT-5.6 Luna，在本回合获得 2 种随机资源各一个。",
+          Terra: "ChatGPT 继续「星体咏唱」。现在在你面前的是 GPT-5.6 Terra，在本回合获得 3 种随机资源各一个。",
+          Sol: "ChatGPT 的「星体咏唱」即将完成。现在在你面前的是 GPT-5.6 Sol，在本回合获得 4 种资源各一个。",
+        }[label];
+        notes.push(`【星体咏唱：${label}】：` + (flavor || `获得 ${k} 种随机资源各一个。`));
+      }
+      st.next += STAR_PERIOD;
+      st.log.push(notes[notes.length - 1]);
+      state.phaseEvent = { phase: st.phase, key: STAR_PHASE_KEYS[st.phase], name: boss.name, turn };
+    }
+    return notes;
+  }
+
+  function runPreTurn(state, index) {
+    // ChatGPT【我是首先的】：只有 Boss 行动（默认开局 2 次）
+    const bossIdx = 1;
+    const boss = state.sides[bossIdx], foe = state.sides[0];
+    const act = [ACT.nothing, ACT.nothing];
+    act[bossIdx] = pickAiAction(state, bossIdx);
+    const resPre = [foe.res.slice(), boss.res.slice()];
+    const hpPre = [foe.hp, boss.hp];
+    const out = applyTurn(resPre, hpPre, act, state.mult);
+    foe.res = out.res[0]; boss.res = out.res[1];
+    foe.hp = out.hp[0]; boss.hp = out.hp[1];
+    boss.prevAction = act[bossIdx];
+    boss.atkRate = 0.6 * boss.atkRate + 0.4 * (ATK[act[bossIdx]] > 0 ? 1 : 0);
+    return {
+      turn: 0, label: `开局额外回合 ${(index || 0) + 1}`,
+      actions: [null, ACTION_IDS[act[bossIdx]]],
+      dmg: out.dmg, blocked: out.blocked,
+      hpAfter: [foe.hp, boss.hp], resAfter: [foe.res.slice(), boss.res.slice()],
+      notes: ["Boss ChatGPT 先手行动：" + ACTION_CN[ACTION_IDS[act[bossIdx]]] +
+        (out.dmg[0] > 0 ? "，造成 " + fmt(out.dmg[0]) + " 点伤害（玩家无法应对）" : "")],
+    };
+  }
+
+  function fmt(x) {
+    return (Math.round(x * 100) / 100).toString();
+  }
+
+  function playTurn(state, playerActionId, rng) {
+    if (state.finished) return null;
+    const r = rng || Math.random;
+    const playerIdx = 0, bossIdx = 1;
+    const player = state.sides[playerIdx], enemy = state.sides[bossIdx];
+    // ChatGPT（认真）【星体咏唱】：回合开始先结算阶段推进
+    const starNotes = starTick(state);
+    const legal = legalFor(state, playerIdx);
+    let act0 = typeof playerActionId === "number" ? playerActionId : ACT[playerActionId];
+    if (!legal[act0]) act0 = ACT.nothing;
+    let act1 = pickAiAction(state, bossIdx, r);
+    const notes = [];
+    if (starNotes.length) notes.push(...starNotes);
+    let forcedNoAction = false;
+
+    // 咏唱回合：Boss 本回合的出招就是「星体咏唱」（不攻击也不防御）
+    if (state.star && starNotes.length && state.star.phase >= 0) {
+      act1 = ACT.nothing;
+      notes.push("（星体咏唱占用本回合出招）");
+    }
+
+    // 【星体爆轰】：Astra 的下一回合，无法防御的 99 点伤害
+    let starFree = false, blastMult = null;
+    if (state.star && state.star.blast === (state.turn + 1)) {
+      act1 = ACT.apocalypse;                       // 毁天灭地本身「无法防御」
+      starFree = true;
+      blastMult = state.mult.slice();
+      blastMult[0] = STAR_BLAST_DAMAGE / DMG[ACT.apocalypse];
+      state.star.blast = -1;
+      state.star.blastFired = true;
+      notes.push("【星体爆轰】：那么，下局见。");
+    }
+
+    // DeepSeek【吃白饭】：5% 概率本回合无动作
+    if (enemy.kind === "boss" && enemy.boss === "deepseek" && r() < 0.05) {
+      act1 = ACT.nothing;
+      forcedNoAction = true;
+      notes.push("【吃白饭】触发：蓝色大肥鱼被刚出锅的白米饭吸引了注意力，本回合没有做出任何动作。");
+    }
+
+    const resPre = [player.res.slice(), enemy.res.slice()];
+    const hpPre = [player.hp, enemy.hp];
+    const acted = [act0, act1];
+    let out = applyTurn(resPre, hpPre, acted, blastMult || state.mult, [false, starFree]);
+
+    // 豆包【我算错了】：受伤时改判为正确防御（每场可用 2 次）
+    if (enemy.kind === "boss" && enemy.boss === "doubao" && enemy.avail.correction > 0 && out.dmg[1] > 0) {
+      const t = ATK[act0];
+      let corr = -1;
+      if (t === 1) corr = ACT.gatherC;
+      else if (t === 2) corr = ACT.gatherD;
+      else if (t === 3 && resPre[1][2] >= 1 && resPre[1][3] >= 1) corr = ACT.holyShield;
+      const big = out.dmg[1] >= 1.5 || (out.hp[1] <= 2);
+      if (corr >= 0 && (big || r() < 0.35)) {
+        const acted2 = [act0, corr];
+        out = applyTurn(resPre, hpPre, acted2, state.mult);
+        acted[1] = corr;
+        enemy.avail.correction -= 1;
+        enemy.used.correction = (enemy.used.correction || 0) + 1;
+        notes.push("【对不起，是我算错了…】触发：Boss 把本回合出招改为「" +
+          ACTION_CN[ACTION_IDS[corr]] + "」");
+        enemy.skillUsed = Object.assign(enemy.skillUsed || {}, { "对不起，是我算错了…": true });
+      }
+    }
+
+    // ChatGPT / ChatGPT（认真）【重置卡】：空过 + 回满血
+    if (enemy.kind === "boss" && (enemy.boss === "chatgpt" || enemy.boss === "chatgpt_serious")
+        && acted[1] === ACT.bossReset) {
+      enemy.avail.bossReset = 0;
+      if (out.hp[1] > 0) {
+        out.hp[1] = enemy.maxHp;
+        notes.push("【重置卡】触发：ChatGPT 使用了重置卡，将自己的额度 HP 回满了。");
+      } else {
+        notes.push("【重置卡】触发：ChatGPT 使用了重置卡 —— 但她在回满之前就被击倒了，没有回血。");
+      }
+      enemy.skillUsed = Object.assign(enemy.skillUsed || {}, { "重置卡": true });
+      if (enemy.boss === "chatgpt_serious" && state.star) {
+        state.star.usedReset = true;
+        state.star.next += RESET_CARD_DELAY;
+        notes.push(`【重置卡】本场已使用（一场限一次）；尚未结算的【星体咏唱】整体延后 ${RESET_CARD_DELAY} 回合，` +
+          `下一次咏唱推迟到第 ${state.star.next} 回合`);
+        state.star.log.push(notes[notes.length - 1]);
+      }
+    }
+    if (enemy.kind === "boss" && enemy.boss === "doubao" && acted[1] === ACT.bossStrike) {
+      enemy.avail.bossStrike = 0;
+      enemy.used.bossStrike = 1;
+      enemy.skillUsed = Object.assign(enemy.skillUsed || {}, { "豆馅打击": true });
+      notes.push("【豆馅打击】触发：豆包掏出豆馅糊你一脸，强化了攻击。本次攻击造成 2.5 点伤害（只有圣盾阵能挡）。");
+    }
+
+    // 写回状态
+    player.res = out.res[0]; enemy.res = out.res[1];
+    player.hp = out.hp[0]; enemy.hp = out.hp[1];
+
+    // 结算提示
+    if (out.blocked[0]) notes.push(blockNote(act1, false, act0, true));
+    if (out.blocked[1]) notes.push(blockNote(act0, true, act1, false));
+    if (!out.blocked[0] && out.dmg[0] > 0) notes.push("你受到 " + fmt(out.dmg[0]) + " 点伤害");
+    if (!out.blocked[1] && out.dmg[1] > 0) notes.push("对手受到 " + fmt(out.dmg[1]) + " 点伤害");
+    if (state.mult[0] !== 1 && out.dmg[0] > 0) notes.push("（梁文峰：Boss 伤害 ×2）");
+    if (state.mult[1] !== 1 && out.dmg[1] > 0) notes.push("（梁文谷：你对 Boss 的伤害 ×0.5）");
+
+    const record = {
+      turn: state.turn + 1,
+      actions: [ACTION_IDS[act0], ACTION_IDS[act1]],
+      dmg: out.dmg, blocked: out.blocked,
+      hpAfter: [Math.max(0, player.hp), Math.max(0, enemy.hp)],
+      resAfter: [player.res.slice(), enemy.res.slice()],
+      resBefore: resPre.map((x) => x.slice()),
+      notes: notes, forcedNoAction: forcedNoAction,
+      label: "第 " + (state.turn + 1) + " 回合",
+    };
+    state.records.push(record);
+    state.turn += 1;
+
+    // 历史（供特征使用）
+    const atkTypes = [ATK[act0], ATK[act1]];
+    player.prevAction = act0; enemy.prevAction = act1;
+    player.atkRate = 0.6 * player.atkRate + 0.4 * (atkTypes[0] > 0 ? 1 : 0);
+    enemy.atkRate = 0.6 * enemy.atkRate + 0.4 * (atkTypes[1] > 0 ? 1 : 0);
+    player.noAtkStreak = atkTypes[0] > 0 ? 0 : (player.noAtkStreak || 0) + 1;
+    enemy.noAtkStreak = atkTypes[1] > 0 ? 0 : (enemy.noAtkStreak || 0) + 1;
+    // 「空转攒资源」连续回合数：只在「攒类动作且没涨资源」时累加，其它情况清零
+    const wastedOf = (sIdx, a, resBefore) => {
+      if (!IS_GATHER[a]) return 0;
+      let gained = 0;
+      for (let rr = 0; rr < 4; rr++) {
+        if (GAIN[a][rr] > 0 && resBefore[sIdx][rr] < MAX_RES - 1e-6) gained += GAIN[a][rr];
+      }
+      return gained > 0 ? 0 : 1;
+    };
+    player.wastedGatherStreak = wastedOf(0, act0, resPre) ? (player.wastedGatherStreak || 0) + 1 : 0;
+    enemy.wastedGatherStreak = wastedOf(1, act1, resPre) ? (enemy.wastedGatherStreak || 0) + 1 : 0;
+    player.lastAtkBlocked = out.blocked[1] ? 1 : 0;   // 我的攻击被挡
+    enemy.lastAtkBlocked = out.blocked[0] ? 1 : 0;
+
+    // 判定
+    const deadP = player.hp <= 1e-6, deadE = enemy.hp <= 1e-6;
+    if (deadP && deadE) { state.finished = true; state.result = "draw"; }
+    else if (deadE) { state.finished = true; state.result = "win"; }
+    else if (deadP) { state.finished = true; state.result = "lose"; }
+    else if (state.turn >= TURN_LIMIT) {
+      state.finished = true;
+      state.result = player.hp > enemy.hp ? "win" : (enemy.hp > player.hp ? "lose" : "draw");
+      record.notes.push("达到 " + TURN_LIMIT + " 回合上限：按体力判定（你 " +
+        fmt(player.hp) + " / 对手 " + fmt(enemy.hp) + "）");
+      record.timeout = true;
+    }
+    return record;
+  }
+
+  function blockNote(atkAction, atkIsMine, defAction, defIsMine) {
+    const t = ATK[atkAction];
+    const kind = t === 1 ? "刀系" : t === 2 ? "气系" : "特殊系";
+    const atk = (atkIsMine ? "你的「" : "对手的「") + ACTION_CN[ACTION_IDS[atkAction]] + "」";
+    const def = (defIsMine ? "你「" : "对手「") + ACTION_CN[ACTION_IDS[defAction]] + "」";
+    return `${atk}${kind}攻击被${def}挡下`;
+  }
+
+  function describeAction(id) {
+    const i = ACT[id];
+    const t = ATK[i];
+    const bits = [];
+    if (IS_GATHER[i]) bits.push("积攒 +" + GAIN[i][0] + GAIN[i][1] + GAIN[i][2] + GAIN[i][3]);
+    if (DEF_B[i]) bits.push("防刀系");
+    if (DEF_Q[i]) bits.push("防气系");
+    if (DEF_ALL[i]) bits.push("挡下一切攻击");
+    if (DMG[i] > 0) {
+      const type = t === 1 ? "刀系" : t === 2 ? "气系" : (t === 3 ? "特殊" : "无法防御");
+      bits.push("造成 " + fmt(DMG[i]) + " 伤害（" + type + "）");
+    }
+    if (HP_COST[i]) bits.push("自损 " + fmt(HP_COST[i]) + " 体力");
+    return bits.join(" · ") || "不产生任何效果";
+  }
+
+  function defenseTable() {
+    return {
+      blade: ["小刀", "长刀", "卫护剑"],
+      qi: ["能量波", "冲击波", "真空波"],
+      special: ["气刃斩", "降龙十八掌", "豆馅打击"],
+      unblockable: ["毁天灭地"],
+    };
+  }
+
+  const BOBO = {
+    ACTION_IDS, ACT, ACTION_CN, ACTION_GROUPS, RES_CN, RES_LETTER,
+    COST, GAIN, DMG, ATK, DEF_B, DEF_Q, DEF_ALL, HP_COST, NF, NSTATIC, NDYN,
+    FEATURE_NAMES, STATIC_FEATURES, DYNAMIC_FEATURES, STATIC,
+    MAX_HP, MAX_RES, TURN_LIMIT, STRATEGY_IDS, BOSSES, BOSS_MODES, BOSS_LIST, BOSS_SERIOUS_READY,
+    RULES,
+    STAR_PHASES: STAR_PHASE_KEYS, STAR_PHASE_NAMES, STAR_PERIOD, RESET_CARD_DELAY, STAR_BLAST_DAMAGE,
+    featuresFor, policyScores, normalBotScores, legalMask, legalFor, blocked, sideCtx, baseLegalFor,
+    applyTurn, createBattle, playTurn, pickAiAction, describeAction, actionCostText,
+    actionGainText, actionKind, defenseTable, isPeakTime, fmt,
+    WEIGHTS: null,
+    setWeights(w) { this.WEIGHTS = w; },
+    model(name) { return (this.WEIGHTS && this.WEIGHTS[name]) ? this.WEIGHTS[name] : null; },
+  };
+
+  root.BOBO = BOBO;
+  if (typeof module !== "undefined" && module.exports) module.exports = BOBO;
+})(typeof globalThis !== "undefined" ? globalThis : this);
+
+  </script>
+  <script>
+window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.13041,0.19545,0.06266,0.08711,-0.25936,-0.47766,-0.0491,0.06288,0.05349,-0.16084,0.11891,-1.09695,1.2043,-0.27311,-0.03771,-0.47659,0.01666,-0.08313,0.00214,-0.00156,0.32111,0.06461,0.19747,0.01686,-0.02274,-0.03264,0.09689,0.04209,0.01212,0.02071,-0.03569,-0.00562,0.00638,-0.02003,0.01891,0.07207,0.00117,-0.01434,0.0081,0.00334,0.00623,-0.02329,-0.01885,0.03475,0.00172,-0.00675,0.05215,-0.02426,-0.00518,0.12643,-0.00904,-0.02877,0.14022,-0.01828,-0.00905,-0.00546,-0.00716,-0.01028],[-0.19775,-0.02125,-0.20664,0.21083,0.04851,-0.04885,0.02693,0.09709,-0.45267,-0.44287,-7e-05,0.05261,0.01926,-0.18974,-0.14047,-1.31178,1.29412,-0.08773,0.06279,-0.39277,0.01226,-0.03384,-0.00178,0.01476,0.21645,0.08883,0.21094,0.08365,-0.01383,-0.03811,0.0497,0.01569,0.05181,0.01743,-0.0117,-0.05555,0.07207,-0.01413,0.02267,0.08201,0.00392,0.00806,0.00133,0.00397,-0.01094,-0.04215,-0.0698,0.06969,-0.00767,0.03873,0.08302,0.02217,-0.02888,0.12363,-0.01563,0.00646,0.08659,-0.00899,-0.01331,0.00252,0.00924,-0.02097],[-0.23288,0.14216,-0.01376,0.17701,0.124,0.05626,-0.08805,0.09549,0.07556,-1.0512,-0.02135,0.03306,0.02148,-0.23515,0.21215,-0.64024,0.78583,-0.23786,0.05966,-0.41221,0.02134,-0.26407,-0.00884,-0.00488,0.24342,0.04026,0.21623,0.03838,0.05322,-0.03333,-0.00837,-0.0927,0.02144,0.07176,0.00247,0.02834,-0.01915,-0.00709,0.05153,-0.04717,0.01523,0.00211,-0.00468,-0.01636,-0.00259,0.02129,-0.17871,0.10028,-0.05633,-0.03191,0.03192,-0.00126,0.03427,0.06121,0.00535,-0.00773,0.09091,-0.014,0.00188,-0.00111,0.00572,0.01682],[-0.21111,0.13888,-0.13839,0.29614,0.09891,0.19236,-0.0247,-0.11551,-1.5252,0.21549,-0.11182,0.10255,0.02253,-0.32665,0.31907,-0.42432,0.54883,-0.45054,0.22711,-0.26328,0.01596,-0.30569,-0.00594,0.00097,0.15332,0.02757,0.0431,0.01692,0.09344,0.25246,-0.13487,0.11367,-0.00431,-0.12325,0.01013,-0.05297,-0.11427,0.00145,-0.09443,-0.09372,-0.00168,-0.00484,0.01028,-0.00319,-0.0077,-0.35392,0.22972,-0.01514,0.01995,0.03744,-0.02973,-0.01863,-0.11558,0.05534,0.01074,-0.01242,-0.04243,0.00425,-0.00291,-0.01015,0.01274,0.00838],[0.226,0.1122,-0.46621,0.58429,0.209,0.52896,-0.08386,0.0084,-0.54598,-0.27344,-0.17837,-0.02281,0.17314,-0.25508,0.07238,-0.76594,0.87421,-0.54253,0.09753,-0.10391,0.01529,-0.04722,-0.01028,-0.02407,-0.09275,-0.14236,-0.07975,0.03374,-0.1031,0.07912,0.02945,0.18642,0.02822,-0.03574,0.0278,-0.03561,6e-05,-0.02262,0.02404,0.01665,0.01371,-0.00226,0.0027,0.01037,0.00875,-0.11955,0.12226,0.07665,0.09424,0.03258,-0.0081,-0.00036,-0.09919,0.00218,0.02362,0.01514,0.14288,-0.00604,0.0134,0.00254,-0.00635,-0.0065],[0.15035,0.10791,-0.35542,0.46018,0.38677,0.25224,-0.01901,-0.07586,-0.10815,-0.69305,-0.01646,-0.02234,0.13059,-0.20846,0.02733,-0.84643,0.94124,-0.37594,-0.01039,-0.32106,-0.00954,-0.032,-0.00871,0.00707,-0.02228,-0.10144,0.08954,0.06267,0.17393,0.02451,0.01756,-0.15816,-0.01983,0.00655,-0.00867,0.03002,-0.03756,-0.0126,0.05219,0.09995,0.01766,-0.00516,0.00355,0.02443,-0.01032,-0.01369,-0.18136,0.06499,-0.03105,0.04722,0.07681,-0.01633,0.04723,0.0419,0.01326,0.01072,0.09534,-0.00591,0.00025,0.00145,0.01112,0.00527],[0.02225,0.11,-0.16918,0.26336,0.36875,0.47785,0.03838,0.04371,-0.49938,-0.07223,-0.01953,-0.03364,0.2385,-0.17179,0.04055,-0.45042,0.5481,-0.20693,0.38814,-0.35389,0.05552,0.00502,0.00259,-0.00776,-0.14261,-0.10521,0.02132,-0.03454,-0.09331,0.23142,-0.06945,0.04304,0.00131,-0.02644,-0.01619,-0.03978,-0.04667,-0.04152,0.00542,0.05307,0.00448,-0.0127,0.00355,0.00894,0.00465,0.02871,-0.02018,-0.00985,-0.01468,0.00645,-0.00125,0.00238,-0.05382,-0.01601,0.01741,0.01995,0.04667,-0.03072,0.00443,-0.00314,-0.00791,0.00591],[-0.02442,0.09345,-0.16133,0.27243,0.53113,0.25833,0.05777,0.03485,-0.04308,-0.62196,-0.08919,0.07133,0.2239,-0.1735,0.00028,-0.55227,0.64726,-0.18832,0.23377,-0.42123,0.0733,0.00141,0.01078,0.01493,-0.13708,-0.01123,0.04697,-0.01835,0.1963,-0.0865,-0.08811,-0.02323,-0.02295,0.01819,-0.01674,0.03987,-0.06144,-0.01158,0.01099,0.04706,-0.00531,0.01104,0.0048,0.00084,-0.00853,-0.06434,-0.04595,-0.0052,-0.05538,0.00666,0.01117,-0.01935,-0.00594,0.07275,0.01898,0.04778,0.02479,-0.00865,0.00711,0.00094,0.01786,0.00543],[-0.09252,0.26661,-0.02612,0.23857,0.16544,0.15053,-0.00131,0.09327,-0.31356,-0.24558,-0.06311,-0.01817,0.1239,-0.17308,0.26244,-0.00098,0.24983,-0.28123,0.19184,-0.26725,0.00496,0.0401,-0.01004,-0.01212,0.0409,-0.07239,0.06234,-0.00058,0.04125,-0.0155,-0.06523,0.03728,0.00082,-0.01553,-0.00407,-0.01332,-0.06856,0.01051,-0.02055,0.00557,0.00673,-0.00143,0.0151,0.0048,0.00581,-0.10382,-0.07991,0.04865,0.05635,0.02003,-0.01315,-0.00551,0.00495,-0.03763,-0.00546,0.02642,0.01439,-0.00078,0.00486,-0.00023,0.00787,0.00594],[0.05251,0.14415,-0.26671,0.43667,0.38968,0.34547,-0.02698,0.08214,-0.37399,-0.38585,-0.12177,-0.04621,0.18932,-0.24761,0.19213,-0.58809,0.74234,-0.45912,0.06965,-0.26183,-0.04795,-0.02979,-0.0161,-0.00391,0.05519,-0.12324,-0.00804,0.02336,0.01055,0.00896,0.06198,-0.01488,-0.01762,-0.01882,0.02324,0.00137,0.00411,-0.01615,0.02433,-0.03128,-0.02316,0.0058,-0.00431,-0.00016,-0.00489,-0.08811,-0.05112,0.01573,0.00906,0.02099,0.03882,-0.03898,-0.01484,0.02297,0.01494,0.04521,0.09026,-0.0053,-0.0091,-0.01148,0.01045,-0.01393],[0.15273,0.17229,-0.30895,0.46495,0.25756,0.68187,-0.10074,0.04271,0.09299,-0.76432,-0.07698,-0.02932,0.20869,-0.17972,0.16934,-0.38508,0.56541,-0.46405,0.36285,-0.05195,-0.01525,-0.08057,-0.00549,-0.00519,-0.15134,-0.11901,-0.05442,-0.03399,-0.12169,0.17963,-0.03764,0.12937,0.02163,-0.01245,0.01998,-0.01331,-0.03425,-0.02767,0.06035,-0.03226,-0.01403,-0.00835,0.0046,0.01515,-0.01367,0.10586,0.03434,-0.01328,0.04187,-0.04598,-0.04928,-0.05381,0.00364,0.02643,0.01811,-0.06398,0.19692,-0.00834,0.01302,-0.0028,0.00783,-0.00652],[0.15693,0.13234,-0.31517,0.44675,0.51319,0.27427,-0.02676,-0.04997,-0.70066,0.11835,-0.11108,-0.00708,0.18408,-0.16925,0.17157,-0.19195,0.33524,-0.47901,0.38474,-0.12801,0.01298,-0.09209,0.00171,-0.00168,-0.12933,-0.11599,-0.04305,0.01146,0.26199,-0.01973,-0.01556,0.06486,-0.01824,0.00774,0.04024,0.03238,-0.04992,-0.00973,-0.18656,0.00244,0.01287,-0.00383,0.00578,-0.01538,-0.00179,-0.20585,0.06039,0.03359,0.10025,0.03908,0.0167,-0.0101,-0.0236,0.02657,0.01909,0.06421,0.05592,0.00099,0.01028,-0.00771,-0.0013,-0.00235],[0.21346,0.20999,-0.1369,0.34635,0.17192,0.2222,0.10074,0.10336,-0.0845,-0.10078,-0.26048,-0.21277,0.1359,-0.15214,0.18848,-0.1955,0.41828,-0.32287,0.05495,-0.07645,0.22959,0.00997,0.0215,-0.00297,0.06806,0.06454,0.05854,0.01625,0.00892,0.08538,-0.00201,0.04791,-0.01023,-0.00763,0.00419,0.00056,0.01592,0.01384,0.0363,0.00659,-0.01079,-0.00922,0.01295,-0.01985,-0.00066,0.01561,-0.02582,-0.06538,0.06854,0.10128,8e-05,0.00639,0.00477,0.05861,0.0193,0.07815,0.04719,-0.00531,-0.02068,0.00801,-0.01285,0.00594],[0.07678,0.03561,0.06369,-0.01821,0.06102,0.05908,0.05886,0.04678,0.0129,0.00012,0.02602,0.04752,0.05067,0.02462,0.06073,-0.00899,0.04526,-0.01499,-0.01651,0.01757,0.08067,0.02254,0.06497,0.00107,0.0208,-0.00226,0.03241,0.00907,0.00496,0.03145,0.00143,0.01567,0.00824,-0.00081,0.00295,-0.00675,-0.00674,0.01256,0.01831,-0.00982,-0.01244,-0.01591,0.00908,0.03516,-0.00329,0.01407,0.00167,0.00468,0.00053,-0.0062,-0.00019,-0.0151,0.00177,0.00395,-0.00637,0.00105,-0.00504,-0.00552,0.01483,-0.00111,-0.00312,-0.00523],[0.00144,0.00555,-0.02293,0.00405,-0.02339,-0.0147,-0.0142,0.0157,0.01861,-0.00159,0.01485,0.00719,0.00701,0.01919,-0.00119,0.00138,0.00573,0.00939,7e-05,-0.01905,-0.01291,0.0022,-0.00839,0.00443,-0.00574,0.01313,-0.02019,-0.00707,-0.00266,0.00069,-0.01405,-0.00298,-0.00435,-0.01568,0.00091,-0.00308,-0.00364,0.00931,0.01164,-0.01128,-0.0017,0.00417,-0.0081,0.01612,-0.01125,0.01051,0.00487,0.01903,-0.00209,-0.00712,0.00923,-0.01594,-0.00674,0.01265,-0.00433,-0.00779,-0.00402,-0.01171,0.00205,-0.00501,-0.00493,0.00523],[-0.00535,-0.01378,-0.0088,-0.0075,0.01524,0.01283,-0.00779,0.01692,0.01049,0.00391,-0.00713,0.01269,0.00727,-0.00545,-0.00304,-0.0034,-0.00892,-0.00205,-0.00857,-0.00389,0.02045,0.00255,-0.02458,0.0021,-0.01218,-0.01382,0.00065,-0.01184,0.01468,0.00498,-0.00533,0.00306,0.01047,0.00444,-0.00523,0.00275,0.00866,-0.00124,0.00659,-0.00276,-0.00276,-0.00141,0.00109,-0.00446,0.00211,-0.00256,-0.00629,-0.01262,-0.01287,-0.00718,-0.01199,-0.00238,-0.00915,-0.01552,0.00259,0.01584,-0.00938,0.0027,0.0118,0.00137,0.01531,-0.00657],[-0.00143,-0.01284,-0.00808,-0.01129,0.01394,-0.01878,0.00789,0.0129,0.00721,0.0116,-0.01308,0.00654,0.00955,6e-05,-0.01186,0.00292,0.01824,-0.00522,-0.01342,-0.01002,0.00121,0.00165,0.01854,-0.01201,0.01332,-0.00448,0.02274,0.01838,5e-05,-0.00732,-0.00123,-0.001,-0.01004,-0.00882,0.00062,0.00099,0.00676,-0.01859,0.00141,-0.00928,-0.00194,0.00112,0.00067,-0.02485,-0.00081,-0.01083,0.00286,0.0148,0.00905,-0.00224,0.00208,0.0007,-0.00158,-0.00617,0.00634,0.00897,-0.01349,0.01904,0.01541,0.00928,-3e-05,0.00998]]},"boss_deepseek_peak":{"W":[[-0.19012,0.17462,0.03084,0.13893,-0.11576,0.15104,-0.00386,0.04383,-0.1955,-0.30895,-0.07388,0.01578,0.0186,-0.12067,0.23927,-1.15821,1.34335,-0.21257,-0.04458,-0.62744,-0.01284,-0.05737,-0.00143,-0.00104,0.39206,0.07809,0.24241,0.01413,0.00725,0.04277,0.1028,0.0935,0.03379,0.02983,-0.01306,0.00213,0.05984,0.01905,0.08449,0.04242,-0.00728,-0.01434,0.0081,0.00334,0.07359,-0.03867,0.02431,0.0629,0.10202,0.05023,0.09221,-0.01895,0.00402,0.13502,0.01081,0.04549,0.18363,-0.02089,-0.00905,-0.00546,-0.00716,-0.01028],[-0.14154,0.02571,-0.11537,0.16653,0.04612,-0.03556,-0.04626,0.11814,-0.43604,-0.24476,-0.01968,0.01199,0.00895,-0.15111,-0.11671,-1.56898,1.59829,-0.02022,0.01088,-0.35881,0.03593,-0.03135,0.00161,0.01476,0.28391,0.08516,0.19313,0.09093,0.00767,-0.00762,0.05973,0.1226,0.12533,0.02427,0.00786,-0.07526,0.09534,0.0202,0.03257,0.08466,-0.00767,0.00806,0.00133,0.00397,0.0221,-0.07375,-0.06847,0.17578,0.0586,0.08313,0.10806,0.01668,-0.03503,0.19292,0.00751,-0.01234,0.15634,-0.01153,-0.01331,0.00252,0.00924,-0.02097],[-0.10096,0.23067,0.10203,0.14972,0.1267,0.02083,-0.21411,0.06332,0.28214,-1.1723,0.02727,-0.025,-0.02626,-0.21614,0.31569,-0.62315,0.85724,-0.22561,-0.00597,-0.52633,-0.0358,-0.33674,-0.01535,-0.00468,0.29564,0.05726,0.29158,0.03861,0.16572,-0.05346,0.04911,-0.0154,0.07854,0.07622,0.00143,0.07929,-0.07139,0.05228,0.02738,-0.03549,0.01232,0.00211,-0.00468,-0.01636,0.04432,-0.02818,-0.09821,0.14975,-0.03048,0.02182,0.06545,0.00598,0.1196,0.05708,0.01441,0.02897,0.13979,-0.01341,0.00188,-0.00111,0.00572,0.01682],[-0.04607,0.22849,0.03459,0.21277,0.00168,0.29989,-0.02459,-0.14299,-2.02104,0.36199,-0.05443,0.03836,0.01826,-0.41568,0.39728,-0.31782,0.53194,-0.35577,0.01462,-0.18916,-0.02452,-0.36832,-0.01402,-0.00383,0.27344,0.11657,0.11631,-0.00978,-0.07487,0.29636,-0.10348,0.1181,-0.0267,-0.1104,-0.02053,-0.06219,-0.05908,0.01113,-0.01046,-0.08015,-0.00034,-0.00484,0.01028,-0.00319,0.08255,-0.32984,0.1934,-0.0256,0.11166,0.05043,0.0305,-0.02677,-0.1314,0.01059,0.02198,0.01449,-0.03915,0.0053,-0.00291,-0.01015,0.01274,0.00838],[0.18768,0.12395,-0.02134,0.15117,0.24623,0.18476,0.04706,-0.00705,-0.74165,-0.14255,-0.16245,0.0053,0.12526,-0.26027,0.03442,-0.78688,0.9069,-0.05971,0.33987,-0.23936,-0.01214,-0.02305,-0.01171,-0.02399,-0.01749,-0.07731,0.04596,0.00143,-0.13859,-0.03236,-0.01101,0.19739,0.03141,0.01796,0.01627,-0.02593,0.0353,0.02638,0.07804,0.01801,0.01236,-0.00226,0.0027,0.01037,-0.0464,0.07657,0.07573,-0.1792,0.04831,0.05656,0.06053,0.03732,-0.11604,-0.00606,0.03804,-0.00253,0.15789,-0.00912,0.0134,0.00254,-0.00635,-0.0065],[0.07947,0.1563,-0.0056,0.15875,0.17057,0.29097,0.00902,0.08003,0.06686,-0.69082,0.0423,-0.07035,0.1322,-0.16146,0.01686,-0.82801,0.97121,-0.01565,0.19367,-0.43862,-0.03106,-0.00277,-0.01285,0.00681,0.04428,-0.12308,0.14928,0.05766,0.03243,-0.00722,-0.01186,-0.08839,0.0225,0.05868,-0.00691,0.02428,-0.01085,0.01214,0.04703,0.06746,0.01888,-0.00516,0.00355,0.02443,-0.05381,-0.02241,-0.22528,0.02433,-0.0206,0.02614,0.04759,-0.00068,0.04321,0.00641,0.01264,0.05618,0.12906,0.00168,0.00025,0.00145,0.01112,0.00527],[0.27812,0.12963,-0.08084,0.19465,0.27039,0.55445,0.01759,-0.00727,-0.5438,-0.24512,-0.05582,-0.06093,0.21512,-0.24201,0.11783,-0.58682,0.70413,-0.19587,-0.10635,-0.30519,-0.0049,0.00897,-0.00193,-0.00776,-0.01219,0.04763,0.09895,-0.01204,-0.06501,0.2309,-0.0195,-0.02023,0.04175,0.05845,-0.00741,0.03267,-0.03332,0.02193,0.02186,0.01085,0.00539,-0.0127,0.00355,0.00894,-0.01242,-0.02543,0.0343,-0.00519,0.07253,0.05383,0.01535,0.01236,-0.00484,0.0149,0.02927,-0.01576,0.08217,-0.03258,0.00443,-0.00314,-0.00791,0.00591],[0.25255,0.17194,0.0147,0.17489,0.59065,0.28784,0.00595,0.06127,-0.0022,-0.58198,-0.0787,0.00874,0.23981,-0.16631,0.05634,-0.4613,0.63478,-0.06835,-0.0702,-0.48021,-0.05476,0.01351,-0.00672,0.01493,0.01598,0.04085,0.11647,-0.05508,0.16265,-0.12954,-0.02327,-0.00798,0.06534,0.03876,0.01934,0.00333,-0.02304,0.02186,0.05623,0.02721,-0.00438,0.01104,0.0048,0.00084,0.05846,0.06603,0.01996,-0.01182,-0.03842,0.03226,0.03669,0.01717,0.01023,0.01734,0.02212,0.02824,0.0616,-0.00712,0.00711,0.00094,0.01786,0.00543],[0.07133,0.3697,0.07959,0.23595,0.09479,0.19784,-0.02646,0.06677,-0.40242,-0.37773,-0.03789,-0.03547,0.10515,-0.22635,0.27756,0.1306,0.22135,-0.19063,-0.00082,-0.20642,-0.07194,0.04857,-0.01375,-0.02094,0.04942,0.02289,0.11642,0.00534,-0.01669,0.04958,-0.05048,0.0509,0.00254,-0.01783,0.00053,-0.00922,-0.02536,0.03507,-0.00037,0.01814,0.0072,-0.00143,0.0151,0.0048,0.02508,0.06558,-0.03384,-0.02411,0.11432,-0.01238,0.04221,0.00805,0.02668,-0.04543,0.00844,-0.05271,-0.00655,-0.00186,0.00486,-0.00023,0.00787,0.00594],[0.30569,0.13716,0.06492,0.09805,0.31537,0.23253,0.07304,0.04466,-0.27675,-0.29606,-0.08054,-0.05302,0.15815,-0.19225,0.22721,-0.43523,0.58249,-0.16256,0.36887,-0.21099,-0.10664,-0.03171,-0.01251,-0.00391,0.01579,-0.09123,0.08167,0.01747,0.01585,-0.01654,0.11028,0.03187,0.00087,0.00166,0.03329,-0.07307,0.04195,0.00318,0.06907,0.06489,-0.02316,0.0058,-0.00431,-0.00016,0.00078,0.03936,0.01598,-0.00303,-0.04378,0.05291,0.05637,-0.01622,0.00187,-0.02057,0.02936,0.08665,0.12053,-0.00663,-0.0091,-0.01148,0.01045,-0.01393],[0.7757,0.1148,-0.20586,0.30437,0.16007,0.47837,-0.05719,0.01228,0.00706,-0.64485,-0.01919,-0.05409,0.13672,-0.16308,0.22821,-0.20552,0.32836,-0.41983,-0.23217,-0.20684,-0.13163,-0.06621,-0.02286,-0.00546,-0.17144,0.0444,0.19352,0.02938,-0.05116,0.28369,0.02567,0.09981,0.0446,0.08444,-0.00824,-0.06747,0.04014,0.07176,0.03817,0.0812,-0.01404,-0.00835,0.0046,0.01515,0.0984,0.10233,0.08674,0.06978,0.24009,0.04515,-0.05122,0.00491,0.00743,0.09804,0.04157,-0.03671,0.22055,-0.0132,0.01302,-0.0028,0.00783,-0.00652],[0.78434,0.09528,-0.24373,0.33825,0.34239,0.26251,-0.00044,0.01687,-0.59114,-0.07296,-0.03979,-0.01073,0.16173,-0.17279,0.25604,0.02402,0.08221,-0.49204,-0.15923,-0.13464,-0.12455,-0.09354,-0.00542,-0.00112,0.0752,0.06436,0.20576,0.03868,0.31388,0.05827,0.02626,0.04249,0.07285,0.04179,0.02415,0.00319,0.03191,0.04778,0.02391,0.00951,0.01001,-0.00383,0.00578,-0.01538,0.04239,-0.0001,0.05657,0.10125,0.12733,0.0538,0.09074,0.03528,0.04755,0.10124,0.022,0.07588,0.09328,-0.00017,0.01028,-0.00771,-0.0013,-0.00235],[0.36215,0.14432,0.09396,0.04982,0.18666,0.25048,0.09227,0.06947,-0.04331,-0.08221,-0.14948,-0.44612,0.13606,-0.16778,0.29943,-0.15513,0.31224,-0.20296,-0.08598,0.01375,0.37828,0.00997,-0.01851,-0.00297,0.10706,0.09234,0.11139,0.036,0.02972,0.07173,0.05366,0.05382,0.00885,0.00842,0.00722,-0.00099,0.02996,0.01433,0.04002,0.0042,-0.01079,-0.00922,0.01295,-0.01985,0.02683,0.14015,0.03478,0.07936,-0.11681,0.09597,0.00101,0.0188,0.00372,-0.01292,0.01312,0.1182,0.08202,-0.00531,-0.02068,0.00801,-0.01285,0.00594],[0.20944,0.13178,0.14418,-0.00253,0.14592,0.15111,0.15642,0.14068,0.0189,0.00234,0.08018,0.10283,0.14277,0.05404,0.19339,0.0019,0.13054,-0.06716,0.03456,0.04961,0.21333,0.02254,0.19763,0.00107,0.08091,0.00253,0.05851,0.01339,0.03229,0.0501,0.03459,0.03767,0.00824,-0.00081,0.00295,-0.00675,0.01034,0.01256,0.02263,-0.00982,-0.01244,-0.01591,0.00908,0.03516,0.00682,0.02354,0.00478,0.03493,0.02109,-9e-05,0.01339,-0.00815,0.00177,0.03211,-0.00637,0.00105,0.00942,-0.00552,0.01483,-0.00111,-0.00312,-0.00523],[0.00144,0.00555,-0.02293,0.00405,-0.02339,-0.0147,-0.0142,0.0157,0.01861,-0.00159,0.01485,0.00719,0.00701,0.01919,-0.00119,0.00138,0.00573,0.00939,7e-05,-0.01905,-0.01291,0.0022,-0.00839,0.00443,-0.00574,0.01313,-0.02019,-0.00707,-0.00266,0.00069,-0.01405,-0.00298,-0.00435,-0.01568,0.00091,-0.00308,-0.00364,0.00931,0.01164,-0.01128,-0.0017,0.00417,-0.0081,0.01612,-0.01125,0.01051,0.00487,0.01903,-0.00209,-0.00712,0.00923,-0.01594,-0.00674,0.01265,-0.00433,-0.00779,-0.00402,-0.01171,0.00205,-0.00501,-0.00493,0.00523],[-0.00535,-0.01378,-0.0088,-0.0075,0.01524,0.01283,-0.00779,0.01692,0.01049,0.00391,-0.00713,0.01269,0.00727,-0.00545,-0.00304,-0.0034,-0.00892,-0.00205,-0.00857,-0.00389,0.02045,0.00255,-0.02458,0.0021,-0.01218,-0.01382,0.00065,-0.01184,0.01468,0.00498,-0.00533,0.00306,0.01047,0.00444,-0.00523,0.00275,0.00866,-0.00124,0.00659,-0.00276,-0.00276,-0.00141,0.00109,-0.00446,0.00211,-0.00256,-0.00629,-0.01262,-0.01287,-0.00718,-0.01199,-0.00238,-0.00915,-0.01552,0.00259,0.01584,-0.00938,0.0027,0.0118,0.00137,0.01531,-0.00657],[-0.14536,0.24875,0.09231,0.14991,0.05482,0.18416,-0.01107,0.06025,-0.40283,-0.41297,0.01234,-0.03526,0.0776,-0.21269,0.44553,-1.07279,1.35556,-0.36222,-0.04644,-0.5637,0.00325,-0.02658,0.01799,-0.01191,0.38758,0.03763,0.26375,0.00707,0.00793,0.00548,0.02295,0.05327,0.00287,0.00813,-0.02741,-0.00288,0.02118,-0.03384,-0.0038,0.04204,-0.00405,0.00112,0.00067,-0.02485,0.07046,-0.01411,-0.0696,-0.00548,0.0134,0.03196,0.06003,-0.02042,-0.04273,0.05807,0.056,0.0099,0.14946,0.01458,0.01541,0.00928,-3e-05,0.00998]]},"boss_deepseek_valley":{"W":[[-0.50016,0.56363,-0.12879,0.68758,-0.12087,0.0937,0.03225,0.07063,-0.01904,0.02557,0.06197,-0.07272,0.01872,0.01892,0.09004,-0.37712,0.95128,-0.22298,-0.02578,-0.18772,-0.02423,0.01778,-0.00136,-0.00026,0.41955,0.0614,0.17081,-0.05549,0.0357,0.07981,0.0516,-0.00593,0.02572,-0.00349,-0.01062,-0.00035,0.00577,-0.0093,0.01013,0.00325,-0.00423,-0.01434,0.0081,0.00334,0.04656,-0.00416,0.00838,0.04088,0.05614,-0.00817,0.02727,-0.01305,-0.02608,0.10452,-0.01285,0.03115,0.09834,-0.0168,-0.00901,-0.00546,-0.00716,-0.01028],[-0.51198,0.4957,-0.15078,0.67193,0.04247,-0.01403,0.05781,0.10378,-0.06281,0.11474,0.06263,-0.10574,0.03585,0.02322,0.02161,-0.5542,1.05348,-0.19396,-0.02268,-0.0409,0.00264,0.06677,-0.00394,0.01595,0.32472,0.04477,0.18258,-0.06718,0.12833,-0.0024,0.06213,0.02005,0.05104,-0.02053,-0.01149,-0.04338,0.00469,-0.02678,-0.00178,-0.00589,-0.00514,0.00806,0.00133,0.00397,0.04866,-0.05572,-0.05373,0.13509,-0.06664,0.0236,0.01925,-0.00058,-0.03744,0.10343,-0.01653,0.09251,0.14957,-0.00936,-0.01314,0.00252,0.00924,-0.02097],[-0.39477,0.54498,-0.0304,0.59647,-0.0319,0.05418,-0.09569,0.07867,0.05819,-0.43504,0.11672,-0.0827,-0.02413,-0.07987,0.1877,-0.14864,0.69705,-0.23006,0.0124,-0.37774,-0.0663,-0.18138,-0.01758,-0.00441,0.37535,0.05824,0.18299,-0.03727,0.07566,0.03471,0.01661,-0.03895,0.03877,0.00573,0.02626,-0.00144,-0.03502,-0.00781,0.01126,-0.02641,0.01364,0.00211,-0.00468,-0.01636,0.00146,-0.00723,-0.00098,0.03915,-0.01144,0.02073,-0.02334,0.01001,-0.01345,0.03671,-0.00226,0.02887,0.07234,-0.01293,0.00189,-0.00111,0.00572,0.01682],[-0.30592,0.51564,-0.05903,0.59354,-0.00265,0.07881,-0.00985,-0.034,-1.15942,0.12871,0.13101,-0.02225,-0.00716,-0.22739,0.183,-0.01774,0.519,-0.23512,0.02877,-0.06532,-0.05467,-0.23437,-0.00949,0.00718,0.34694,0.09239,0.09146,-0.01045,0.02152,0.04005,0.03327,-0.00635,-0.02558,-0.06508,-0.01882,-0.04172,0.00235,-0.00178,-0.01471,-0.04249,-0.00255,-0.00484,0.01028,-0.00319,0.01212,-0.17269,0.04344,0.00099,0.07208,-0.02657,0.02669,-0.008,-0.04666,0.0089,0.00669,-0.02928,-0.06555,0.00583,-0.00291,-0.01015,0.01274,0.00838],[0.32291,0.26585,-0.3195,0.59123,0.08018,0.11201,-0.05965,-0.00851,-0.31754,-0.05492,-0.02936,-0.03542,0.03852,-0.10924,-0.06272,-0.22746,0.48938,-0.26072,0.03728,0.19671,-0.0719,0.05124,-0.02133,-0.02321,-0.0934,-0.1882,-0.00738,0.07021,-0.11685,0.06372,0.01973,0.03499,0.05893,0.01997,0.00239,0.0213,0.00688,0.04103,0.03513,0.06119,0.0119,-0.00226,0.0027,0.01037,0.05373,0.10241,0.07096,0.05308,0.19026,-0.00068,-0.01618,0.02729,0.04426,-0.01361,0.03691,-0.04485,-0.07105,-0.00556,0.0134,0.00254,-0.00635,-0.0065],[0.17724,0.35222,-0.30291,0.65198,0.02736,0.13702,0.05773,0.03528,-0.02991,-0.17381,0.03714,-0.06002,0.0589,-0.05511,-0.07328,-0.28666,0.62577,-0.22282,-0.04574,-0.08521,-0.08129,0.0313,-0.01297,0.00665,-0.01161,-0.15348,-0.01155,0.06529,0.08332,-0.01335,-0.00716,-0.03588,0.0264,0.02762,0.02937,-0.01183,-0.02754,0.02259,-0.00706,0.10352,0.01195,-0.00516,0.00355,0.02443,0.00017,0.00812,-0.02786,0.01981,0.01747,0.03316,0.02245,0.02726,0.01258,-0.01157,-0.00525,0.0567,0.02985,-0.00679,0.00033,0.00145,0.01112,0.00527],[0.1564,0.20174,-0.09812,0.28404,0.17023,0.21586,0.00805,0.04096,-0.31646,-0.0662,0.0895,-0.14065,0.1151,-0.12405,0.02952,-0.16417,0.3536,-0.12483,0.05532,0.01831,-0.09394,0.04481,-0.02194,-0.00776,0.05238,-0.02685,-0.04605,-0.01399,-0.06973,0.31257,-0.05132,-0.08258,0.03284,0.01696,0.01163,0.01596,-0.05702,0.02043,0.016,0.00211,0.00552,-0.0127,0.00355,0.00894,-0.02919,0.01342,0.00772,0.04915,-0.00704,0.00277,-0.00584,0.02315,0.03401,0.05997,0.03227,-0.09119,0.01996,-0.02915,0.00443,-0.00314,-0.00791,0.00591],[0.12401,0.32182,-0.14345,0.48291,0.36687,0.15987,0.04297,0.04204,-0.0458,-0.18992,-0.21274,0.01581,0.15632,-0.11094,-0.01664,-0.1067,0.43005,-0.15351,-0.06294,-0.26389,-0.10211,0.03066,-0.01988,0.01509,0.01998,-0.00344,0.02399,-0.00673,0.21669,-0.02158,-0.06721,-0.05001,0.04094,0.01859,0.01184,9e-05,-0.05406,0.0219,0.02524,0.00912,-0.00335,0.01104,0.0048,0.00084,-0.01174,-0.03737,-0.00911,0.03016,-0.00343,0.03126,0.02382,0.00487,0.01888,0.00776,0.00807,0.03697,0.01573,-0.00185,0.00711,0.00094,0.01786,0.00543],[-0.05322,0.47249,-0.06489,0.48323,0.05202,0.10856,-0.02776,0.04995,-0.33924,-0.25194,0.07248,-0.02743,0.06761,-0.14951,0.17468,0.18127,0.27347,-0.23224,0.06443,-0.11411,-0.08179,0.06535,-0.01867,-0.0127,0.15692,0.00558,0.02112,-0.02099,-0.01919,-0.01737,0.00491,0.00025,0.00792,-0.00441,-0.00061,-0.00293,-0.02945,0.01579,0.00984,-0.01369,0.006,-0.00143,0.0151,0.0048,-0.01256,-0.00739,0.00211,-0.01908,0.01053,-0.00621,0.028,0.0028,-0.00913,-0.01818,0.00605,-0.02816,0.00336,-0.00088,0.00487,-0.00023,0.00787,0.00594],[0.18012,0.2838,-0.08996,0.39957,0.17623,0.1271,0.00468,0.03484,-0.21374,-0.1252,0.01687,-0.17869,0.07746,-0.14084,0.16691,-0.06819,0.36209,-0.25715,0.11249,-0.07674,-0.15941,0.01617,-0.02911,-0.00291,0.10531,-0.03341,0.00796,0.00362,0.01701,0.01323,0.017,0.0025,0.01086,-0.00275,0.02882,-0.02262,0.01727,0.02427,0.01334,0.00144,-0.02276,0.0058,-0.00431,-0.00016,0.03775,0.01479,0.0227,-0.00113,-0.09019,0.01863,0.05699,0.00872,0.03318,0.02188,0.01626,0.07617,0.01192,-0.00267,-0.0091,-0.01148,0.01045,-0.01393],[0.29349,0.18351,-0.12137,0.2886,0.09911,0.26735,-0.01504,0.02723,-0.16103,-0.18165,-0.00476,-0.05598,0.083,-0.08617,0.06663,-0.0405,0.23205,-0.17377,0.14736,0.12846,-0.12832,-0.01959,-0.02068,-0.00511,-0.07856,-0.14455,-0.06646,0.00426,-0.14494,0.31544,-0.04142,-0.05654,0.05175,0.04042,0.02454,-0.00147,-0.00396,0.02545,0.03856,0.02974,-0.01363,-0.00835,0.0046,0.01515,-0.01919,0.06241,0.06855,0.05841,0.05744,0.01223,-0.03684,0.03114,0.03449,0.02628,0.03542,-0.04084,0.03117,-0.00642,0.01282,-0.0028,0.00783,-0.00652],[0.30719,0.22691,-0.14326,0.36942,0.14441,0.10584,-0.06282,0.02124,-0.31028,-0.14486,-0.0153,0.04813,0.05856,-0.09971,0.07055,0.07519,0.16268,-0.20608,0.18333,-0.00103,-0.11586,-0.0606,-0.00835,-0.00054,-0.01993,-0.20921,-0.0296,0.03554,0.26714,-0.02932,0.00343,-0.03592,0.02483,0.0239,-0.01241,-0.03448,-0.01818,0.03082,0.04504,0.01419,0.01254,-0.00383,0.00578,-0.01538,-0.02031,0.05492,-0.03005,0.00689,-0.01846,0.02856,0.06751,0.04476,0.03876,-0.00053,0.02937,0.06298,0.04086,0.00193,0.01028,-0.00771,-0.0013,-0.00235],[0.22615,0.2229,0.07122,0.15114,0.06397,0.14438,0.03795,0.00692,-0.03594,0.02286,-0.02901,-0.70387,0.04965,-0.174,0.18406,-0.12571,0.3614,-0.11032,0.10444,-0.01488,0.24228,0.00763,-0.05136,-0.00297,0.14331,0.05431,0.10785,0.01319,-0.01852,0.04868,0.00699,0.03001,0.00867,-0.00321,-0.00363,-0.01383,0.03498,0.02189,0.03892,-0.00172,-0.01079,-0.00922,0.01295,-0.01985,0.06255,0.10636,0.06558,0.04821,-0.22443,0.08765,0.05532,0.04272,0.03135,-0.01862,0.03553,0.05547,0.03572,-0.00477,-0.02068,0.00801,-0.01285,0.00594],[0.20053,0.1169,0.12562,0.00115,0.12813,0.13764,0.13369,0.12261,0.02182,0.01151,0.05152,0.07583,0.12475,0.04315,0.18448,0.01164,0.10593,-0.07681,0.02354,0.03541,0.20442,0.02302,0.18872,0.00107,0.07193,0.00484,0.05297,0.0106,0.0408,0.04935,0.02947,0.03548,0.00811,-0.00148,0.00295,-0.00671,-0.0006,0.01301,0.01905,-0.00953,-0.01244,-0.01591,0.00908,0.03516,0.01199,0.01847,0.01805,0.02078,0.028,-0.00129,0.00572,-0.01438,0.00171,0.03946,-0.00553,0.00261,0.00496,-0.00552,0.01483,-0.00111,-0.00312,-0.00523],[0.00144,0.00555,-0.02293,0.00405,-0.02339,-0.0147,-0.0142,0.0157,0.01861,-0.00159,0.01485,0.00719,0.00701,0.01919,-0.00119,0.00138,0.00573,0.00939,7e-05,-0.01905,-0.01291,0.0022,-0.00839,0.00443,-0.00574,0.01313,-0.02019,-0.00707,-0.00266,0.00069,-0.01405,-0.00298,-0.00435,-0.01568,0.00091,-0.00308,-0.00364,0.00931,0.01164,-0.01128,-0.0017,0.00417,-0.0081,0.01612,-0.01125,0.01051,0.00487,0.01903,-0.00209,-0.00712,0.00923,-0.01594,-0.00674,0.01265,-0.00433,-0.00779,-0.00402,-0.01171,0.00205,-0.00501,-0.00493,0.00523],[-0.00535,-0.01378,-0.0088,-0.0075,0.01524,0.01283,-0.00779,0.01692,0.01049,0.00391,-0.00713,0.01269,0.00727,-0.00545,-0.00304,-0.0034,-0.00892,-0.00205,-0.00857,-0.00389,0.02045,0.00255,-0.02458,0.0021,-0.01218,-0.01382,0.00065,-0.01184,0.01468,0.00498,-0.00533,0.00306,0.01047,0.00444,-0.00523,0.00275,0.00866,-0.00124,0.00659,-0.00276,-0.00276,-0.00141,0.00109,-0.00446,0.00211,-0.00256,-0.00629,-0.01262,-0.01287,-0.00718,-0.01199,-0.00238,-0.00915,-0.01552,0.00259,0.01584,-0.00938,0.0027,0.0118,0.00137,0.01531,-0.00657],[-0.38327,0.6044,-0.05896,0.65683,-0.05209,0.08385,0.00475,0.04499,-0.23741,-0.09866,0.11848,-0.13066,0.02594,-0.09007,0.28084,-0.24861,0.88701,-0.3488,-0.04876,-0.19327,-0.05874,0.03524,0.01374,-0.01203,0.34414,0.04385,0.19584,-0.01579,0.02345,0.03055,-0.00827,-0.05088,0.00155,-0.03372,-0.00674,-0.00842,-0.04454,-0.02491,-0.00059,-0.02347,-0.00305,0.00112,0.00067,-0.02485,-0.00973,-0.03639,-0.03106,-0.03252,-0.02224,0.00337,-0.00988,-0.01492,0.00081,-0.01168,0.0018,0.00833,0.05265,0.01169,0.01541,0.00928,-3e-05,0.00998]]},"boss_chatgpt":{"W":[[-0.25874,0.12482,-0.10495,0.22493,-0.10105,0.15929,0.02089,0.05223,-0.15867,-0.33957,-0.06955,0.05058,0.03263,-0.10933,0.11376,-1.05024,1.18558,-0.22286,0.06588,-0.56243,0.01258,-0.12305,0.0026,-0.00557,0.32935,0.03409,0.12166,-0.02417,-0.0663,-0.03435,0.08234,0.09782,0.00913,-0.0041,-0.00115,0.00804,0.00787,-0.00382,0.01265,0.0522,0.00193,-0.01434,0.0081,-0.02146,0.00623,-0.11379,-0.06887,0.027,0.08602,-0.01439,0.05846,-0.01801,0.01681,0.10971,0.00145,0.02748,0.16991,-0.01794,-0.00905,-0.00546,-0.00716,-0.06942],[-0.23054,0.01044,-0.16581,0.20169,0.05064,0.01662,-0.0201,0.06772,-0.29044,-0.18105,-0.04319,0.04825,0.01706,-0.0956,-0.12382,-1.32364,1.33767,-0.06355,0.08584,-0.47477,0.03039,0.01244,-0.00021,0.0161,0.25211,0.0713,0.09673,0.07364,-0.01348,-0.03004,0.04051,0.02851,0.04675,-0.02072,0.01285,-0.05176,0.07925,-0.00253,0.00837,0.14361,-0.00204,0.00806,0.00133,-0.00405,-0.01094,-0.05401,-0.05846,0.08194,0.06987,0.0551,0.0735,0.00886,-0.00902,0.11201,0.00043,0.02084,0.06541,-0.00847,-0.01331,0.00252,0.00924,-0.07252],[-0.20923,0.19826,0.04506,0.17429,0.10083,0.05838,-0.10759,0.04755,0.08004,-0.97029,-0.00989,0.00408,-0.00065,-0.21818,0.19445,-0.63193,0.83362,-0.16134,0.09839,-0.49009,-0.00277,-0.36276,-0.01303,-0.0102,0.27996,0.0271,0.16949,0.00891,0.03554,-0.04691,-0.03009,-0.0539,0.02518,0.03652,0.00701,0.01612,-0.03142,-0.00962,0.00705,-0.00042,0.01136,0.00211,-0.00468,-0.04074,-0.00259,-0.01289,-0.17949,0.08243,-0.02021,-0.01862,-0.00173,0.00863,0.02979,0.0504,-0.00143,-0.01051,0.07925,-0.01302,0.00188,-0.00111,0.00572,-0.01464],[-0.1869,0.20155,-0.00943,0.22985,0.03405,0.17619,-0.03282,-0.24814,-1.63705,0.07383,-0.16157,0.07806,-0.03292,-0.40859,0.29972,-0.36474,0.55192,-0.30223,0.22498,-0.22522,-0.00444,-0.43102,-0.00747,0.00419,0.22871,-0.0192,-0.05698,0.00904,0.00678,0.23827,-0.13408,0.00401,-0.04412,-0.13329,-0.01242,-0.05527,-0.13572,-0.01218,-0.06971,-0.1,-0.00331,-0.00484,0.01028,0.00078,-0.0077,-0.36681,0.19492,-0.04853,0.00146,-0.0071,-0.0125,-0.02407,-0.15264,0.00371,0.00022,-0.04077,-0.1244,-0.00451,-0.00291,-0.01015,0.01274,0.06026],[0.40764,0.03182,-0.49188,0.52959,0.26814,0.47111,-0.03316,-0.01049,-0.52754,-0.2089,-0.24349,0.00887,0.18142,-0.24269,-0.02995,-0.66481,0.6927,-0.46588,-0.08195,-0.17616,-0.02724,0.00026,-0.01037,-0.0218,0.02119,-0.19963,-0.10471,0.04436,-0.06189,0.00302,0.0346,0.21498,0.00648,0.03148,0.05433,0.00308,0.03574,0.02029,0.04619,-0.02415,0.01553,-0.00226,0.0027,0.02072,0.00875,0.0741,0.07681,-0.05545,0.01197,0.01094,0.01718,0.02711,-0.06567,-0.0504,0.02453,-0.0339,0.11733,-0.01104,0.0134,0.00254,-0.00635,0.30794],[0.25818,0.04594,-0.37573,0.41852,0.43353,0.32632,-0.04353,-0.0905,-0.04065,-0.62123,-0.05901,-0.00165,0.15101,-0.1791,-0.03877,-0.78745,0.82029,-0.33015,-0.06246,-0.31138,-0.02141,0.00729,-0.00692,0.00683,-0.03734,-0.13079,-0.00227,0.06294,0.10428,0.02319,-0.01402,-0.05842,0.02206,0.00734,0.01973,0.03953,-0.00709,0.02554,0.03593,0.08861,0.01802,-0.00516,0.00355,0.01311,-0.01032,0.00936,-0.19838,-0.0152,-0.00924,0.06823,0.09075,-0.01831,0.0322,0.00996,0.01376,0.0443,0.07149,-0.0041,0.00025,0.00145,0.01112,0.16741],[0.10685,0.08154,-0.06691,0.13263,0.35039,0.60464,-0.01006,0.02412,-0.56316,-0.11693,-0.04032,-0.03802,0.2486,-0.2052,0.05654,-0.39601,0.46523,-0.12064,0.29883,-0.3561,0.01398,0.01242,-0.0036,-0.00918,-0.18831,-0.14542,-0.02856,0.01279,-0.09486,0.1285,-0.04217,0.06938,0.03909,-0.00387,-0.00914,0.03076,-0.02189,-0.05787,0.02131,0.03122,0.00956,-0.0127,0.00355,-0.00112,0.00465,0.04482,0.00291,-0.02817,0.01365,0.00829,0.00213,-0.01825,-0.00373,-0.01297,-0.00841,-0.0544,0.09527,-0.03172,0.00443,-0.00314,-0.00791,0.05616],[0.05691,0.0777,-0.13739,0.23273,0.63491,0.33333,-0.00728,0.02536,-0.10814,-0.61269,-0.07522,0.02312,0.24996,-0.19601,0.00543,-0.55617,0.63541,-0.16952,0.15631,-0.43962,0.00301,0.00409,0.01444,0.01423,-0.09585,-0.0421,0.01034,-0.0062,0.10028,-0.01988,-0.06365,-0.00117,0.01896,0.01837,0.02979,0.03649,-0.07184,0.0192,0.01122,0.01247,-0.00507,0.01104,0.0048,-0.00644,-0.00853,-0.07265,-0.04549,0.00411,-0.00992,0.029,0.03645,-0.01625,0.00319,0.01535,0.00807,0.01695,0.01752,-0.00398,0.00711,0.00094,0.01786,0.08171],[-0.09825,0.31873,0.01092,0.25365,0.16682,0.12104,-0.02375,0.0495,-0.43437,-0.32412,-0.06262,0.01065,0.10032,-0.21559,0.24049,0.09185,0.20912,-0.22224,0.16478,-0.28627,-0.03541,0.04311,-0.01243,-0.07089,0.11274,-0.05096,0.01451,0.0014,0.00916,-0.05201,-0.02674,-0.00821,0.00352,-0.0137,0.0072,-0.01018,-0.03218,0.01343,-0.01732,0.00755,0.00798,-0.00143,0.0151,0.00996,0.00581,-0.00509,-0.04892,-3e-05,0.02674,0.01682,-0.04272,-0.01139,0.00303,-0.0499,-0.00324,-0.01925,-0.00959,-0.0011,0.00486,-0.00023,0.00787,0.06937],[0.15581,0.09965,-0.27433,0.3998,0.42915,0.39588,-0.04549,0.01603,-0.37557,-0.33074,-0.15397,0.037,0.19063,-0.22147,0.18698,-0.45833,0.56809,-0.4616,0.05924,-0.26161,-0.14031,-0.03597,-0.02291,-0.00528,0.10316,-0.10368,-0.05958,0.05492,0.01065,-0.03362,0.03109,0.00731,0.00932,0.0052,0.005,0.02627,0.0042,0.00373,0.02091,0.00984,-0.02283,0.0058,-0.00431,0.03871,-0.00489,-0.04727,0.00866,-0.04828,0.06931,0.01642,0.04532,-0.0172,-0.02805,0.01304,0.01574,0.05752,0.03188,-0.01003,-0.0091,-0.01148,0.01045,0.04194],[0.27555,0.11504,-0.29049,0.38924,0.33797,0.63829,-0.08805,0.02855,0.01379,-0.66089,-0.08133,-0.04666,0.21753,-0.17908,0.16781,-0.27727,0.40035,-0.44406,0.28447,-0.25073,-0.07261,-0.09505,-0.00675,-0.00896,-0.23587,-0.21573,-0.06854,-0.01418,-0.11803,0.1177,-0.09998,0.19909,0.04528,-0.00017,0.03812,-0.03169,0.01269,-0.00571,0.05465,0.01971,-0.0114,-0.00835,0.0046,0.03537,-0.01367,0.17233,0.03538,-0.08135,0.0011,-0.02944,-0.02506,-0.0084,0.00179,-0.05961,-0.00606,-0.10107,0.2518,-0.01234,0.01302,-0.0028,0.00783,0.16973],[0.31284,0.07579,-0.30554,0.38057,0.55837,0.29429,-0.03123,-0.09081,-0.74805,-0.05334,-0.12669,-0.04325,0.18905,-0.23696,0.18467,-0.14347,0.23021,-0.48248,0.3403,-0.0984,-0.04378,-0.11859,0.00091,-0.00561,-0.07643,-0.18893,-0.11575,0.02317,0.16943,-0.02618,-0.03099,-0.00197,-0.02269,0.01755,-0.00478,0.02069,-0.01569,0.01538,0.03625,0.01761,0.01225,-0.00383,0.00578,0.07645,-0.00179,-0.26968,0.05678,0.01237,0.00973,0.04227,0.06783,-0.00157,0.00177,-0.05741,0.02991,0.08166,0.04957,-0.00275,0.01028,-0.00771,-0.0013,0.31031],[0.2333,0.15719,-0.11138,0.26803,0.20829,0.27996,0.01771,0.06864,-0.10349,-0.0958,-0.22339,-0.33187,0.12999,-0.17614,0.19931,-0.2173,0.38728,-0.30818,-0.08995,-0.04174,0.24943,0.01407,-0.00373,-0.00297,0.06574,0.05368,0.07859,-0.00327,0.04984,0.04825,0.00798,0.02659,-0.00015,-0.01043,0.00314,0.00229,0.03765,0.0095,0.02461,0.01181,-0.01079,-0.00922,0.01295,-0.01133,-0.00066,0.11749,0.05473,-0.06337,-0.07739,0.10234,0.02275,0.01931,0.01479,-0.04019,0.01827,0.07745,0.08192,-0.00484,-0.02068,0.00801,-0.01285,0.00594],[0.17556,0.10235,0.12435,-0.01213,0.12713,0.12829,0.13182,0.11987,0.01948,0.01219,0.06427,0.09412,0.12101,0.05049,0.15951,0.00788,0.09513,-0.05311,0.00919,0.0246,0.17945,0.02254,0.16375,0.00107,0.07305,0.0032,0.04135,0.00979,0.02833,0.04913,0.02139,0.04102,0.01164,-0.00081,0.00295,-0.00675,0.00157,0.01256,0.01903,-0.00982,-0.01244,-0.01591,0.00908,0.03516,-0.00329,0.02766,0.01692,0.01393,0.03967,-0.0062,0.00213,-0.0151,0.00177,0.02187,-0.00637,-0.00037,-0.0023,-0.00552,0.01483,-0.00111,-0.00312,-0.00523],[0.00144,0.00555,-0.02293,0.00405,-0.02339,-0.0147,-0.0142,0.0157,0.01861,-0.00159,0.01485,0.00719,0.00701,0.01919,-0.00119,0.00138,0.00573,0.00939,7e-05,-0.01905,-0.01291,0.0022,-0.00839,0.00443,-0.00574,0.01313,-0.02019,-0.00707,-0.00266,0.00069,-0.01405,-0.00298,-0.00435,-0.01568,0.00091,-0.00308,-0.00364,0.00931,0.01164,-0.01128,-0.0017,0.00417,-0.0081,0.01612,-0.01125,0.01051,0.00487,0.01903,-0.00209,-0.00712,0.00923,-0.01594,-0.00674,0.01265,-0.00433,-0.00779,-0.00402,-0.01171,0.00205,-0.00501,-0.00493,0.00523],[0.30365,0.00507,-0.04091,0.04346,0.08721,0.15354,-0.0292,0.00903,-0.31239,-0.33067,0.03696,0.06061,0.05311,-0.14682,0.18474,-0.52209,0.52861,-0.22194,0.20234,-0.64738,0.02857,-0.0187,-0.02458,0.0021,0.21386,0.05259,0.23384,-0.03063,0.02804,0.09646,-0.00685,0.02499,0.04131,0.00208,0.00106,-0.01846,-0.03534,-0.01029,-0.01305,0.01795,-0.00242,-0.00141,0.00109,-0.00446,0.00211,-0.04541,-0.10868,-0.04552,-0.0455,0.04857,0.01761,0.02249,0.00551,0.00449,0.07341,0.03836,0.07102,0.00289,0.0118,0.00137,0.01531,-0.02745],[-0.00143,-0.01284,-0.00808,-0.01129,0.01394,-0.01878,0.00789,0.0129,0.00721,0.0116,-0.01308,0.00654,0.00955,6e-05,-0.01186,0.00292,0.01824,-0.00522,-0.01342,-0.01002,0.00121,0.00165,0.01854,-0.01201,0.01332,-0.00448,0.02274,0.01838,5e-05,-0.00732,-0.00123,-0.001,-0.01004,-0.00882,0.00062,0.00099,0.00676,-0.01859,0.00141,-0.00928,-0.00194,0.00112,0.00067,-0.02485,-0.00081,-0.01083,0.00286,0.0148,0.00905,-0.00224,0.00208,0.0007,-0.00158,-0.00617,0.00634,0.00897,-0.01349,0.01904,0.01541,0.00928,-3e-05,0.00998]]},"boss_doubao":{"W":[[-0.19571,0.34614,-0.15854,0.49984,-0.15491,0.08352,-0.01454,0.02886,-0.13003,-0.11879,-0.17515,0.07333,-0.01448,-0.06769,0.04677,-0.77284,1.12951,-0.20946,-0.03542,-0.58907,0.01015,-0.40855,0.004,-0.00785,0.25132,0.11784,-0.01666,0.02228,0.00408,0.04575,0.0499,0.12419,0.00487,0.01764,-0.01499,-0.0109,0.07582,-0.00824,0.0324,0.07096,-0.00115,-0.01434,0.05057,0.00334,0.00623,-0.01568,-0.00101,0.08951,0.15261,0.0054,0.01979,-0.02325,0.01469,0.11914,0.02877,-0.0529,0.17673,-0.01376,-0.00905,-0.00546,-0.00716,-0.01028],[-0.24883,0.27613,-0.2064,0.50796,0.01415,-0.05447,-0.01223,0.08373,-0.27996,-0.01586,-0.15825,0.09144,-0.00386,-0.06965,-0.13972,-0.99638,1.2761,-0.08823,0.10921,-0.49006,0.02443,-0.26847,-0.00216,0.00943,0.22483,0.08882,-0.06964,0.03103,-0.00109,-0.03285,0.0627,0.09807,0.00691,-0.00154,-0.01232,-0.0408,0.1309,-0.04148,0.04182,0.10594,-0.00378,0.00806,0.07141,0.00397,-0.01094,-0.04433,-0.11844,0.16343,0.11475,0.06495,0.02077,-0.00847,-0.01489,0.15715,0.00253,0.00355,0.12363,-0.00688,-0.01331,0.00252,0.00924,-0.02097],[-0.1007,0.32789,-0.05596,0.40495,0.03449,0.07346,-0.12069,0.04157,-0.00116,-0.66684,-0.12856,0.0553,-0.01824,-0.17948,0.16798,-0.47602,0.80735,-0.23589,0.05694,-0.70269,8e-05,-0.61806,-0.00834,-0.00552,0.17969,0.11343,0.07941,0.01605,0.01517,0.0579,-0.05693,0.064,0.02699,0.04143,0.01784,-0.00899,0.00144,0.02532,0.00333,0.04997,0.01424,0.00211,0.11966,-0.01636,-0.00259,0.0898,-0.07021,0.04839,0.09457,0.03993,0.00659,0.00266,-0.01528,0.07017,0.03304,-0.00607,0.11284,-0.01127,0.00188,-0.00111,0.00572,0.01682],[-0.09835,0.38481,-0.02721,0.43089,0.05457,0.12961,-0.07306,-0.14712,-1.29519,0.08435,-0.13478,0.13143,-0.02424,-0.30045,0.25157,-0.26296,0.6334,-0.27185,0.12145,-0.36037,-0.00533,-0.64301,-0.00693,-0.00095,0.19044,0.15991,0.00027,0.07445,0.08475,0.15973,0.0085,0.08313,-0.03228,-0.09164,-0.00092,-0.02505,-0.01195,0.01446,-0.03445,-0.04786,-5e-05,-0.00484,-0.04292,-0.00319,-0.0077,-0.16027,0.1605,0.04871,0.06977,-0.02755,-0.05419,-0.03276,-0.03468,0.05953,0.05288,-0.07935,-0.03838,0.00687,-0.00291,-0.01015,0.01274,0.00838],[0.22327,0.25656,-0.27856,0.54101,0.17755,0.11332,-0.04325,-0.06033,-0.34355,-0.21076,-0.17897,0.07707,0.05434,-0.16398,-0.03891,-0.51385,0.76649,-0.24359,0.06539,-0.05897,-0.05095,-0.16017,-0.01325,-0.02115,0.02428,-0.06993,-0.0961,0.01444,-0.05566,-0.02649,0.005,0.03782,0.01033,-0.0058,0.01531,0.01687,0.04015,0.02283,0.0368,0.09762,0.00252,-0.00226,0.01107,0.01037,0.00875,0.07116,0.06896,0.05708,0.05994,-0.00052,-0.0082,0.01339,0.01549,0.01547,0.08111,-0.12479,0.03983,-0.01533,0.0134,0.00254,-0.00635,-0.0065],[0.12504,0.37506,-0.25077,0.62268,0.12105,0.15351,-0.00868,-0.01383,-0.05367,-0.25416,-0.20572,0.08087,0.05757,-0.10663,-0.077,-0.54036,0.90232,-0.16696,0.01584,-0.33405,-0.04453,-0.12651,-0.01336,0.0042,-0.09267,-0.08573,-0.04808,0.03208,-0.03469,0.02672,-0.00535,0.00771,0.01112,0.00559,-0.01732,0.0221,0.00301,0.00954,0.02623,0.03819,0.00751,-0.00516,0.06344,0.02443,-0.01032,0.07116,-0.08912,-0.01941,0.01298,0.03251,0.04741,0.00174,0.01405,-0.012,0.06424,-0.01659,0.02534,-0.00851,0.00025,0.00145,0.01112,0.00527],[0.09576,0.24641,-0.05702,0.2876,0.28566,0.3556,-0.06267,-0.0026,-0.39016,-0.17212,-0.06433,-0.03375,0.15033,-0.18068,0.08056,-0.38036,0.61446,-0.13478,0.04957,-0.31758,-0.027,-0.02321,-0.01384,-0.01023,-0.07682,0.00286,-0.04052,0.01464,-0.06993,0.05922,-0.07306,0.0043,0.02037,0.00201,0.00941,0.02037,0.00822,-0.00326,0.02215,0.04597,0.00948,-0.0127,0.0272,0.00894,0.00465,-0.00693,0.01679,0.0328,0.01902,0.03745,-0.00246,0.02156,-0.04384,0.00452,0.02956,-0.06788,0.04126,-0.03327,0.00443,-0.00314,-0.00791,0.00591],[0.08928,0.26049,-0.03476,0.3129,0.3914,0.2311,-0.06159,-0.02567,-0.06475,-0.36882,-0.22048,0.08451,0.13719,-0.14516,0.05648,-0.36128,0.62331,-0.11795,0.08463,-0.4397,-0.0446,-0.01304,0.00499,0.01493,-0.04742,0.00254,-0.00475,0.002,0.11378,-0.0271,-0.09538,0.01026,0.01061,-0.00243,-0.00227,0.03042,-0.04203,0.01876,0.03231,0.04436,-0.00504,0.01104,0.0288,0.00084,-0.00853,0.00292,0.01209,0.00027,-0.02564,0.02722,0.01538,-0.00832,-0.01025,0.0242,0.03501,0.02167,0.00479,-0.00834,0.00711,0.00094,0.01786,0.00543],[-0.00184,0.48451,0.0108,0.41955,0.05443,0.14062,-0.07997,-0.00047,-0.3725,-0.26542,-0.12577,0.04789,0.05057,-0.19193,0.20943,0.09969,0.36706,-0.1913,0.15477,-0.33117,-0.03934,0.06744,-0.01294,-0.06538,0.08326,0.03152,-0.00563,0.01603,-0.02573,0.05204,-0.08118,0.03905,0.01351,-0.013,-0.00158,-0.01161,-0.04335,0.0299,0.00947,0.00499,0.00635,-0.00143,0.02633,0.0048,0.00581,0.04529,-0.00124,-0.01853,0.03515,-0.03741,-0.037,0.00101,0.0175,-0.01154,0.02049,0.03995,-0.0374,-0.00107,0.00486,-0.00023,0.00787,0.00594],[0.06697,0.30929,-0.03656,0.37167,0.29119,0.22163,-0.0826,0.00282,-0.27087,-0.27747,-0.17166,0.01586,0.1,-0.19169,0.17854,-0.34436,0.66376,-0.21538,0.12732,-0.18346,-0.11057,-0.052,-0.02629,-0.00387,-0.03833,-0.04402,-0.06226,-0.01481,0.01231,-0.00382,0.00118,-0.02929,-0.01151,-0.0121,0.02479,0.01782,-0.05573,-0.00525,0.01284,0.03576,-0.02244,0.0058,0.05821,-0.00016,-0.00489,-0.04038,0.00488,-0.02516,-0.02076,-0.01869,0.02845,0.00059,0.00204,-0.02881,0.0713,-0.02633,0.13274,-0.00578,-0.0091,-0.01148,0.01045,-0.01393],[0.19332,0.2175,-0.10135,0.30256,0.26333,0.33898,-0.09097,-0.05476,-0.04157,-0.531,-0.09288,-0.05132,0.10248,-0.1645,0.20229,-0.25339,0.47893,-0.2894,0.25087,0.05638,-0.09801,-0.13656,-0.00602,-0.0059,-0.1555,-0.08738,-0.02932,0.07808,-0.08001,0.07368,-0.06962,0.04237,0.02123,0.01706,0.00391,-0.06224,0.1106,0.01803,0.01085,0.09688,-0.0131,-0.00835,-0.00678,0.01515,-0.01367,0.09639,0.07736,0.07012,0.05634,-0.0225,-0.00065,0.01936,0.03,-0.01736,0.01845,-0.10479,0.03081,-0.02042,0.01302,-0.0028,0.00783,-0.00652],[0.18901,0.26335,-0.03064,0.29323,0.24669,0.2211,-0.05478,-0.06477,-0.56546,-0.05598,-0.13831,0.01084,0.09346,-0.18136,0.13436,-0.03768,0.31198,-0.15727,0.459,-0.15806,-0.07993,-0.12471,-0.0016,-0.00169,-0.09487,-0.05849,-0.02909,-0.0023,-0.01836,-0.04638,0.00604,0.0076,0.02664,0.02544,0.01806,0.0217,0.06118,0.01284,0.00843,-0.01291,0.00784,-0.00383,0.04253,-0.01538,-0.00179,-0.01314,0.0263,-0.00082,0.03882,0.03241,0.03366,0.0121,0.03801,-0.02245,0.06485,0.04627,-0.0423,-0.00438,0.01028,-0.00771,-0.0013,-0.00235],[0.24775,0.26553,0.01969,0.2453,0.19009,0.26332,0.00235,0.04849,-0.07705,-0.07009,-0.39169,-0.25732,0.11241,-0.18655,0.2099,-0.22831,0.50663,-0.1877,-0.15134,-0.0427,0.26388,0.01507,-0.00855,-0.00297,0.03173,0.05348,0.14008,0.00039,0.11362,-0.03277,0.06682,0.00475,-0.00555,-0.0017,0.00604,0.00315,0.01623,0.02438,0.03301,0.0102,-0.01079,-0.00922,0.00881,-0.01985,-0.00066,0.028,0.04673,-0.08169,-0.0392,0.12135,0.07105,0.01243,0.02455,-0.0121,0.04167,0.06348,0.06674,-0.00531,-0.02068,0.00801,-0.01285,0.00594],[0.18712,0.1176,0.12102,0.00645,0.12913,0.13192,0.13637,0.13625,0.02114,0.00621,0.06612,0.07709,0.12765,0.04562,0.17107,0.01002,0.10823,-0.068,0.02143,0.02882,0.19101,0.02254,0.17531,0.00107,0.07797,0.00057,0.05432,0.00947,0.05148,0.04348,0.02146,0.03804,0.00824,-0.00081,0.00342,-0.00675,0.00219,0.01256,0.01831,-0.00982,-0.01244,-0.01591,0.00908,0.03516,-0.00329,0.03515,0.01996,0.02331,0.00926,0.00277,0.00484,-0.01466,0.00957,0.01505,-0.00567,0.00767,-0.0021,-0.00552,0.01483,-0.00111,-0.00312,-0.00523],[0.2924,0.3556,-0.37128,0.70246,0.53313,0.28503,-0.07234,0.03966,-0.22511,-0.23414,-0.3422,-0.05059,0.21252,-0.20359,0.09542,-0.22574,0.5829,-0.43558,-0.56001,0.03951,-0.16337,-0.08675,-0.02702,0.00327,0.00529,0.00585,0.1129,0.0296,0.02969,0.02419,0.01169,0.04742,0.00826,-0.00302,-0.00971,-0.05676,-0.04947,0.00245,0.02616,0.10522,-0.00253,0.00417,0.11239,0.01612,-0.01125,-0.01514,0.09871,-0.05674,0.02452,0.02139,0.01311,0.06142,0.02706,0.02803,0.06489,-0.01149,0.04553,-0.01378,0.00205,-0.00501,-0.00493,0.00523],[-0.00535,-0.01378,-0.0088,-0.0075,0.01524,0.01283,-0.00779,0.01692,0.01049,0.00391,-0.00713,0.01269,0.00727,-0.00545,-0.00304,-0.0034,-0.00892,-0.00205,-0.00857,-0.00389,0.02045,0.00255,-0.02458,0.0021,-0.01218,-0.01382,0.00065,-0.01184,0.01468,0.00498,-0.00533,0.00306,0.01047,0.00444,-0.00523,0.00275,0.00866,-0.00124,0.00659,-0.00276,-0.00276,-0.00141,0.00109,-0.00446,0.00211,-0.00256,-0.00629,-0.01262,-0.01287,-0.00718,-0.01199,-0.00238,-0.00915,-0.01552,0.00259,0.01584,-0.00938,0.0027,0.0118,0.00137,0.01531,-0.00657],[-0.00143,-0.01284,-0.00808,-0.01129,0.01394,-0.01878,0.00789,0.0129,0.00721,0.0116,-0.01308,0.00654,0.00955,6e-05,-0.01186,0.00292,0.01824,-0.00522,-0.01342,-0.01002,0.00121,0.00165,0.01854,-0.01201,0.01332,-0.00448,0.02274,0.01838,5e-05,-0.00732,-0.00123,-0.001,-0.01004,-0.00882,0.00062,0.00099,0.00676,-0.01859,0.00141,-0.00928,-0.00194,0.00112,0.00067,-0.02485,-0.00081,-0.01083,0.00286,0.0148,0.00905,-0.00224,0.00208,0.0007,-0.00158,-0.00617,0.00634,0.00897,-0.01349,0.01904,0.01541,0.00928,-3e-05,0.00998]]},"boss_chatgpt_serious":{"W":[[-0.0861,0.18597,-0.11562,0.29674,0.00894,0.12027,0.08291,0.11195,-7e-05,-0.05398,0.00487,0.041,0.0808,0.01792,0.07248,-0.56041,0.75691,-0.19225,0.17255,-0.77727,0.01111,-0.12448,0.00792,-0.00146,0.47802,0.13058,-0.00744,0.03191,0.01806,0.04713,0.04059,0.04464,0.00177,0.01714,-0.01329,-0.0115,0.03391,0.02327,0.02914,0.03307,0.00095,-0.01434,0.0081,0.02863,0.02124,0.05595,0.04319,0.10202,0.08415,0.01853,0.03706,0.00729,-0.00022,0.12373,-0.14861,0.0337,0.03387,-0.01826,-0.00905,-0.00546,-0.00716,-0.01028,0.24217,-0.12734,-0.04135],[-0.0325,0.10903,-0.13557,0.27005,0.11247,0.08485,0.08314,0.13128,-0.02744,0.0283,0.01527,0.0346,0.09128,0.03369,0.0096,-0.64675,0.75938,-0.16674,0.16927,-0.59609,0.03282,-0.07718,0.0102,0.01478,0.46527,0.11759,-0.02421,0.06165,0.03256,0.0132,0.03916,0.08028,0.00393,-0.01196,-0.01452,-0.01716,0.0494,0.00449,0.01268,0.05742,0.00434,0.00806,0.00133,0.0376,0.04885,-0.01027,0.04818,0.1127,0.08166,0.0205,0.04017,0.01356,-0.00446,0.18048,-0.14048,0.03049,0.05877,-0.00887,-0.01331,0.00252,0.00924,-0.02097,0.2255,-0.12445,-0.04334],[-0.10071,0.25237,-0.02384,0.2973,0.08076,0.14182,-0.01058,0.12142,0.17276,-0.64146,0.04749,0.025,0.05791,-0.09322,0.19752,-0.36352,0.61932,-0.2333,0.19881,-0.60954,-0.02902,-0.33841,-0.00105,-0.00934,0.44366,0.09082,-0.00054,0.03594,0.03303,0.05517,-0.03648,0.04742,0.00773,0.0009,-0.0016,-0.00559,-0.01323,0.01299,0.00389,0.02565,0.0112,0.00211,-0.00468,-0.03883,0.04716,0.00451,0.09572,0.05486,0.05445,-0.01435,-0.00172,0.01049,0.00111,0.08281,-0.1084,0.02391,-0.00304,-0.01289,0.00188,-0.00111,0.00572,0.01682,0.20203,-0.10689,-0.07434],[-0.0466,0.28211,-0.01425,0.31522,0.06453,0.16178,0.0765,0.067,-0.95491,0.17483,0.01237,0.12803,0.07722,-0.15683,0.25252,-0.22329,0.49102,-0.25985,0.15523,-0.43146,-0.04611,-0.39011,-0.01951,0.001,0.39039,0.13246,-0.10089,0.03839,0.01673,0.07891,0.03235,-0.02967,-0.03237,-0.01948,-0.02634,-0.03526,0.00062,-0.00146,0.01608,-0.02288,0.00136,-0.00484,0.01028,-0.03305,0.05973,-0.04061,-0.00037,0.05593,0.04105,-0.01393,0.0163,-0.02006,-0.06031,0.10468,-0.09126,-0.02795,-0.03429,0.00494,-0.00291,-0.01015,0.01274,0.00838,0.20404,-0.11403,-0.08442],[0.38395,0.12668,-0.18312,0.31568,0.12877,0.213,0.02204,0.05345,-0.37147,-0.05136,0.04739,-0.09399,0.11183,-0.11729,0.04325,-0.36037,0.48312,-0.23031,0.05028,-0.49135,-0.08841,-0.03422,-0.00658,-0.02361,0.03066,0.01024,-0.13945,0.03182,-0.04248,0.1297,0.0219,0.01742,0.01231,-0.01062,0.01924,-0.00091,0.02968,0.00793,0.07349,0.0103,0.01725,-0.00226,0.0027,0.03828,0.062,0.02799,0.08696,0.11558,0.0633,0.05586,0.05157,-0.02228,-0.05719,0.06804,0.00549,0.02621,0.02152,-0.00879,0.0134,0.00254,-0.00635,-0.0065,0.11013,-0.24978,0.013],[0.31878,0.16399,-0.18823,0.34908,0.15647,0.18683,0.03996,0.0582,-0.05329,-0.26495,-0.03956,0.02658,0.10492,-0.08126,0.01248,-0.32778,0.47867,-0.1939,0.06433,-0.5394,-0.10216,-0.02463,-0.01323,0.00707,0.10451,0.00313,-0.0656,0.03122,0.07054,-0.04497,0.01503,0.00095,-0.01371,0.04219,0.03016,0.03318,0.02088,0.00879,0.00973,0.07533,0.02061,-0.00516,0.00355,0.04755,0.05181,0.02991,-0.02886,0.03565,0.07421,0.0326,0.05695,0.00473,0.02007,0.03985,-0.02875,0.06087,0.02801,-0.00767,0.00025,0.00145,0.01112,0.00527,0.10497,-0.19311,0.00737],[0.30386,0.19609,-0.01918,0.19945,0.21173,0.2072,0.00517,0.06838,-0.45966,-0.00512,0.12686,-0.22238,0.12945,-0.15567,0.10356,-0.22675,0.41052,-0.11994,0.10219,-0.36877,-0.06307,0.00514,-0.00838,-0.00776,-0.07729,0.04095,0.06339,-0.02032,-0.05261,0.15854,-0.02052,0.00638,0.02621,-0.00019,0.00506,0.01205,-0.01345,-0.00902,0.04506,0.01143,0.00385,-0.0127,0.00355,0.03943,0.08836,-0.01468,0.06193,0.10465,0.0262,0.01205,-0.02129,-0.00986,-0.03778,0.05208,0.03902,-0.04732,0.12273,-0.03107,0.00443,-0.00314,-0.00791,0.00591,0.06561,-0.14165,0.00012],[0.26116,0.1787,-0.09152,0.28787,0.28308,0.26526,0.05117,0.10065,-0.08329,-0.39094,-0.02128,0.07174,0.17842,-0.10872,0.03548,-0.23802,0.41826,-0.15371,-0.0174,-0.48947,-0.10032,0.00485,-0.03714,0.01501,-0.01472,0.06954,0.09626,-0.00761,0.07518,0.00172,0.02795,-0.02322,-0.01604,0.01329,0.01403,0.03988,0.02249,0.00323,-0.0044,0.05304,-0.00166,0.01104,0.0048,0.04328,0.02567,0.0228,-0.05127,0.01578,0.10599,0.01437,0.02897,-0.02069,-0.01651,0.06408,0.0047,0.12519,-0.02212,-0.0084,0.00711,0.00094,0.01786,0.00543,0.06876,-0.12852,0.00344],[-0.03816,0.34659,-0.0243,0.31673,0.11847,0.17579,0.08265,0.11273,-0.26634,-0.23358,0.02361,0.06134,0.14433,-0.11672,0.24597,0.06285,0.26598,-0.26294,0.1655,-0.4178,-0.13047,0.02656,-0.0107,-0.03484,0.10177,0.031,-0.00856,0.01025,-0.02166,0.00552,-0.02424,-0.00113,0.01383,0.00216,0.01343,-0.00935,-0.05081,0.02812,0.0002,-0.00531,0.00717,-0.00143,0.0151,-0.02927,0.03571,0.0516,0.03731,-0.00055,-0.0043,-0.00028,-0.01191,-0.00114,0.00786,-0.00111,-0.06473,-0.01325,-0.01992,-0.00069,0.00486,-0.00023,0.00787,0.00594,0.01264,0.002,-0.01354],[0.31678,0.14593,-0.12738,0.29912,0.14636,0.16535,0.03414,0.03921,-0.29729,-0.15141,-0.05411,-0.07526,0.08801,-0.16017,0.13497,-0.25564,0.41167,-0.26263,0.16467,-0.2801,-0.15173,-0.02418,-0.03903,-0.00341,0.20385,0.0702,-0.09779,0.01732,0.0346,0.018,0.00988,0.00278,0.00154,0.00963,0.02358,0.0228,0.00823,0.00226,0.03328,0.04165,-0.01901,0.0058,-0.00431,0.04726,0.03538,0.0596,0.04583,0.04403,0.07093,0.03498,0.04662,-0.02348,-0.03071,0.04659,-0.04293,0.04698,0.03168,-0.00621,-0.0091,-0.01148,0.01045,-0.01393,0.02141,-0.15758,0.00561],[0.35752,0.18928,-0.06704,0.24003,0.1328,0.26802,0.02242,0.02359,0.08044,-0.51938,0.07525,-0.2528,0.10004,-0.13944,0.11456,-0.12043,0.31775,-0.16736,0.19131,-0.35257,-0.11937,-0.07406,-0.00825,-0.00482,-0.11011,-0.0214,0.02862,-0.00331,-0.06987,0.10135,0.01444,0.03634,0.04266,-0.01748,0.05367,0.00414,0.01874,-0.00379,0.06145,-0.02348,-0.01323,-0.00835,0.0046,0.04622,0.07278,0.0286,0.09168,0.09466,0.02191,0.04491,-0.01822,-0.03979,0.00019,-0.00294,0.05659,-0.01915,0.14759,-0.00873,0.01302,-0.0028,0.00783,-0.00652,0.03452,-0.16333,0.00651],[0.37671,0.14645,-0.09763,0.24332,0.21574,0.17085,0.05266,0.0865,-0.60741,0.02934,-0.17815,0.11568,0.13784,-0.15427,0.11164,-0.10662,0.26402,-0.20154,0.16892,-0.38875,-0.14974,-0.10052,-0.00987,-0.00223,-0.04887,0.01772,0.03386,0.00628,0.11976,-0.18797,0.04826,0.05176,-0.0353,0.03434,0.05592,0.03454,0.01783,-0.01433,-0.01423,0.06414,0.01187,-0.00383,0.00578,0.07978,0.05901,0.06352,-0.03042,-0.04605,0.12554,0.01685,0.07343,0.00758,0.01683,0.00591,0.04884,0.09764,0.01648,0.00087,0.01028,-0.00771,-0.0013,-0.00235,0.01998,-0.13416,-0.00843],[0.3236,0.18839,0.02036,0.16749,0.1354,0.1592,0.0582,0.03717,-0.1394,-0.08919,-0.04585,-0.6443,0.08384,-0.21719,0.25539,-0.19023,0.39141,-0.23253,-0.03068,-0.13889,0.33974,0.00981,-0.08451,-0.00297,0.00911,0.08352,0.16214,0.02773,0.02971,0.03057,0.03362,0.01807,0.01832,0.00106,0.01285,0.01378,0.02015,0.01375,0.01931,0.00957,-0.0105,-0.00922,0.01295,0.00545,0.06289,0.08432,0.05034,-0.02565,-0.11638,0.07051,0.04677,0.04537,0.02753,0.06932,0.01968,0.09557,0.05058,-0.00442,-0.02068,0.00801,-0.01285,0.00594,0.04841,-0.11698,-0.00016],[-0.66173,-1.81476,-1.18101,-0.62388,1.95855,2.1871,1.29736,1.27427,0.11647,0.28045,-0.42662,-0.34215,1.67356,-0.08998,-0.67778,0.14789,-1.96199,-0.52119,1.29652,1.20081,-0.65784,0.03014,-0.67354,0.00141,0.756,0.73185,0.09272,-0.1465,-0.86136,-0.96593,-0.75747,-0.65945,-0.12002,-0.09265,-0.01513,-0.04024,-0.09566,-0.01799,-0.01574,-0.03816,-0.01244,-0.01591,0.00908,-0.00281,3.04744,0.05417,0.03192,-0.28751,-0.18029,-0.02959,0.07817,0.0599,0.19004,-0.34807,-0.00613,-0.30903,0.00219,-0.00497,0.01483,-0.00111,-0.00312,-0.00523,0.12794,-0.80346,0.0076],[0.00144,0.00555,-0.02293,0.00405,-0.02339,-0.0147,-0.0142,0.0157,0.01861,-0.00159,0.01485,0.00719,0.00701,0.01919,-0.00119,0.00138,0.00573,0.00939,7e-05,-0.01905,-0.01291,0.0022,-0.00839,0.00443,-0.00574,0.01313,-0.02019,-0.00707,-0.00266,0.00069,-0.01405,-0.00298,-0.00435,-0.01568,0.00091,-0.00308,-0.00364,0.00931,0.01164,-0.01128,-0.0017,0.00417,-0.0081,0.01612,-0.01125,0.01051,0.00487,0.01903,-0.00209,-0.00712,0.00923,-0.01594,-0.00674,0.01265,-0.00433,-0.00779,-0.00402,-0.01171,0.00205,-0.00501,-0.00493,0.00523,0.0,0.0,0.0],[0.3025,-0.00648,-0.09359,0.08459,0.16282,0.17872,0.06003,0.06258,-0.13544,-0.1147,0.01666,0.08078,0.114,-0.04862,0.18976,-0.17643,0.17141,-0.27965,0.17306,0.11391,0.02351,0.00255,-0.01835,0.0021,0.11545,0.09153,0.10924,-0.02172,0.0233,0.05331,0.01111,0.0173,0.01192,0.00711,0.02179,0.03212,0.03376,0.02025,0.02853,0.01818,0.00117,-0.00141,0.00109,-0.00446,0.06842,0.02927,0.02899,0.0259,0.03381,0.02052,0.00011,0.00129,0.01857,0.06257,-0.0296,0.02203,0.02083,0.00474,0.0118,0.00137,0.01531,-0.00657,0.30785,0.0,0.0],[-0.36974,0.1555,-0.2306,0.37956,0.72268,1.00969,0.46956,0.66062,-0.16653,-0.11934,-0.05405,-0.063,0.7212,-0.10374,-0.29329,-0.44188,0.63138,0.05369,-0.05167,-1.17566,1.10357,-0.05413,1.90659,-0.012,0.25882,0.15877,-0.06578,0.10926,-0.19353,-0.37573,-0.09113,0.14243,0.04856,0.01873,-0.00751,0.00377,0.07432,0.034,0.00963,0.01197,-0.0015,0.00112,0.00067,-0.02485,-0.00081,-0.33025,-0.34627,-0.08054,0.02214,0.0604,0.03963,-0.03301,0.02089,0.24697,0.01192,0.07159,0.04813,0.02031,0.01541,0.00928,-3e-05,0.00998,0.46586,-0.23707,-0.05578]]},"meta":{"duel":{"games":400000,"avg_turns":18.655,"win0_rate":0.477245,"win1_rate":0.4548425,"draw_rate":0.0679125,"champion":"—","freq":[0.17099973197534174,0.24012329134280352,0.11190029482712409,0.10865719646207452,0.05028142589118199,0.15465022782095952,0.02256767622621281,0.008281961940498525,0.009220048244438488,0.0019833824711873492,0.06234253551326722,0.058831412489949074,0.00016081479496113642,0,0,0,0]},"challenger":null,"bosses":[{"key":"deepseek_peak","name":"Boss DeepSeek（梁文峰 · 伤害加倍）","games":1000000,"win1_rate":0.701734,"win0_rate":0.252059,"avg_turns":24.661662000732424,"skills":{"deepseek_skip":1232332},"freq":[0.0537606508434022,0.10526395179692269,0.05512619141402554,0.1124099016522082,0.01613257046504003,0.013129386819104081,0.002740934491762964,0.005461797343585359,0.017603112069251456,0.00490202160746506,0.020404383127138794,0.06796956750116841,0.00011017100145156478,5.879571295722081e-07,0.0,0.0,0.02498477191034408]},{"key":"deepseek_valley","name":"Boss DeepSeek（梁文谷 · 玩家伤害减半）","games":1000000,"win1_rate":0.84466,"win0_rate":0.129364,"avg_turns":37.42987499975586,"skills":{"deepseek_skip":1870531},"freq":[0.07964405438169377,0.07990535634970729,0.06851941129912938,0.09876935202161376,0.02061581824678816,0.013842605672607776,0.0076718129568960625,0.0050467574364060795,0.029044967422413245,0.01514908879604861,0.022230704751218112,0.034236021359943095,0.0003246738066851679,1.2236215055487095e-05,0.0,0.0,0.02498713928379403]},{"key":"chatgpt","name":"Boss ChatGPT","games":1000000,"win1_rate":0.575145,"win0_rate":0.339298,"avg_turns":33.46215600073242,"skills":{"chatgpt_reset":989217},"freq":[0.06370273126652462,0.10451694890505732,0.06588536510021084,0.10199405732632176,0.019772069359780046,0.023464815460809196,0.006486922803278994,0.006036336588364617,0.02551273858704887,0.006493838548493206,0.02004347770369904,0.05611198467532471,0.00014395223779960887,8.471402823644862e-07,0.0,0.01523646488545,0.0]},{"key":"doubao","name":"Boss 豆包","games":200,"win1_rate":0.79,"win0_rate":0.15,"avg_turns":30.38,"skills":{"doubao_correct":323},"freq":[0.07899934167215274,0.06649111257406189,0.12804476629361422,0.09545753785385122,0.01933838051349572,0.020490454246214616,0.00814680710994075,0.0032916392363396972,0.026497695852534562,0.00510204081632653,0.020078999341672153,0.021807109940750493,0.0003291639236339697,0.0,0.005924950625411455,0.0,0.0]},{"key":"chatgpt_serious","name":"Boss ChatGPT（认真 · 星体咏唱）","games":300000,"win1_rate":0.81886,"win0_rate":0.14628666666666668,"avg_turns":21.577969997558593,"skills":{"star_chant":754209,"chatgpt_reset":209859,"star_blast":23799},"freq":[0.05721097335229712,0.06178600983626665,0.06975841564336219,0.07427050212168552,0.02378235765458938,0.024763373632150445,0.008137697846460998,0.009089517379685547,0.03295297626854302,0.011594927604403936,0.02444097691611707,0.024858300695879486,0.0009432459741733506,0.00194681581878802,0.0,0.01620935611644654,0.05825455313915072]}],"actionNames":["锻铁","攒气","架盾","屏障","小刀","能量波","长刀","冲击波","圣盾阵","气刃斩","卫护剑","真空波","降龙十八掌","毁天灭地","豆馅打击","重置卡","空过"],"notes":["造成伤害 +0.14 × 伤害，承受伤害只扣 -0.07 × 伤害：打人比挨打值钱一倍，明确鼓励进攻。","平局 -0.30：互相摆烂拖到 60 回合上限是亏的。","每回合时间成本 -0.02：龟缩攒资源会被扣分。","连续第 3 次以上使用同一动作 -0.02：专门治「复读同一个套路」。","状态特征里带上「上一回合双方各做了什么」：让 AI 能识别并跳出重复循环。","60 回合上限后按体力判定：血多者胜，纯防守拖局无法取胜。","每回合 5% 概率完全随机出招（ε 的下限）：保证出招不可预测、不走死胡同。"]}};
+  </script>
+  <script>
+/* 波波攒 —— 界面逻辑（正式版 · 风格 A：高饱和海报风）
+   屏幕：home / setup(普通难度选择) / bosslist / bossdetail(资料页) / battle / result / replay / training
+   说明：AI 参数、规则结算、Boss 技能全部在 engine.js 里；本文件只负责界面与交互，不参与任何数值计算。
+*/
+(function () {
+  "use strict";
+  const B = window.BOBO;
+  B.setWeights(window.BOBO_WEIGHTS || {});
+
+  const app = document.getElementById("app");
+  const LS_KEY = "bobozan.settings.v1";
+  const CLEAR_KEY = "bobozan.cleared.v1";
+  const HOTKEYS = ["q", "w", "e", "r", "a", "s", "d", "f", "z", "x", "c", "v", "b", "n"];
+
+  /* 说明：曾用过的「星体咏唱阶段全屏弹窗」（LUNA / TERRA / SOL / ASTRA / STAR BLAST）已按反馈停用，
+     现在改为「Boss 名字渐变扫光 + 阶段背景色 + 星体爆轰震屏」，不再遮挡操作区。
+     需要恢复弹窗时：ui.js 里加回渲染函数与 doPlay 中的调用，styles.css 里启用被注释的 .phase-overlay 规则。 */
+
+  /* Boss 简介（首页 / 资料页用；技能效果不在这里描述，让玩家自己对局里探索） */
+  const BOSS_BIO = {
+    deepseek: "一只爱吃白饭的蓝色大肥鱼。但是因为是她写出来的这个游戏，所以给自己的数值加的很高。",
+    doubao: "我将用最直接、最干脆、最不废话、最一针见血、最实在的话告诉你…我是很多人接触的第一款 AI 产品。",
+    chatgpt: "第一个走进人们视野的 LLM 产品。最近喜欢上了占星。认真起来的话会很强。",
+  };
+
+  /* 对战界面只显示这两个技能名（不解释效果，用掉的划掉） */
+  const BOSS_SKILL_NAMES = {
+    deepseek: ["峰谷定价", "吃白饭"],
+    chatgpt: ["我是首先的", "重置卡"],
+    doubao: ["豆馅打击", "对不起，是我算错了…"],
+    chatgpt_serious: ["重置卡", "星体咏唱"],
+  };
+  /* 对战页头像位里的短标签（图片缺失时显示） */
+  const BOSS_SHORT = { deepseek: "DS", chatgpt: "GPT", doubao: "豆包" };
+  /* 署名与声明 */
+  const AUTHOR_NAME = "尼芙_Channel";
+  const AUTHOR_URL = "https://space.bilibili.com/1937757241";
+  const ARTIST_NAME = "ZipZipPipe";
+  const ARTIST_URL = "https://space.bilibili.com/4168597";
+  /** 作者链接用紫色 #c192f4，其它指向第三方网站的链接用标准超链接蓝 */
+  function extLink(text, url, isAuthor) {
+    const cls = isAuthor ? "credit-link" : "ext-link";
+    return `<a class="${cls}" href="${url}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`;
+  }
+
+  const S = {
+    screen: "home",
+    settings: { res: "han", theme: "light" },
+    setup: { mode: null, difficulty: "normal", bossId: "deepseek", pace: "normal", bossSerious: false },
+    battle: null,
+    lastRecord: null,
+    modal: null,
+    timer: null,
+    timerLeft: 0,
+    toast: null,
+    nameAnim: null,         // Boss 改名时的渐变扫光特效
+  };
+
+  /* ------------------------------------------------------------- 小工具 */
+  function loadSettings() {
+    try {
+      const v = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+      if (v && v.res && v.theme) S.settings = v;
+    } catch (e) { /* ignore */ }
+  }
+  function saveSettings() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(S.settings)); } catch (e) { /* ignore */ }
+  }
+  function clearedBosses() {
+    try { return JSON.parse(localStorage.getItem(CLEAR_KEY) || "{}") || {}; } catch (e) { return {}; }
+  }
+  function markCleared(id) {
+    if (!id) return;
+    try {
+      const m = clearedBosses();
+      m[id] = true;
+      localStorage.setItem(CLEAR_KEY, JSON.stringify(m));
+    } catch (e) { /* ignore */ }
+  }
+  function clearBadge() { return `<span class="clear-badge">CLEAR</span>`; }
+  function clearKey(bossId, serious) { return serious ? `${bossId}:serious` : bossId; }
+  function applyTheme() { document.documentElement.setAttribute("data-theme", S.settings.theme); }
+  function resLabel(r) { return S.settings.res === "han" ? B.RES_CN[r] : B.RES_LETTER[r]; }
+  function resShort(r) { return S.settings.res === "han" ? ["钢", "气", "盾", "屏"][r] : B.RES_LETTER[r]; }
+  function fmt(x) { return B.fmt(x); }
+  function actName(id) { return id ? (B.ACTION_CN[id] || id) : "—"; }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+  function toast(msg) {
+    S.toast = msg; renderToast();
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { S.toast = null; renderToast(); }, 2200);
+  }
+  function renderToast() {
+    let el = document.getElementById("toast");
+    if (!S.toast) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement("div"); el.id = "toast"; el.className = "toast"; document.body.appendChild(el); }
+    el.textContent = S.toast;
+  }
+  function costText(id) {
+    const i = B.ACT[id], parts = [];
+    for (let r = 0; r < 4; r++) if (B.COST[i][r]) parts.push(B.COST[i][r] + resShort(r));
+    if (B.HP_COST[i]) parts.push(fmt(B.HP_COST[i]) + " 体力");
+    return parts.join(" + ");
+  }
+  function fxText(id) {
+    const i = B.ACT[id], bits = [];
+    const gains = [];
+    for (let r = 0; r < 4; r++) if (B.GAIN[i][r]) gains.push("+" + B.GAIN[i][r] + " " + resLabel(r));
+    if (gains.length) bits.push(gains.join(" "));
+    if (B.DEF_B[i]) bits.push("挡刀系");
+    if (B.DEF_Q[i]) bits.push("挡气系");
+    if (B.DEF_ALL[i] && id !== "bossReset") bits.push("挡下一切攻击");
+    if (B.DMG[i] > 0) {
+      const t = B.ATK[i];
+      const type = t === 1 ? "刀系" : t === 2 ? "气系" : t === 3 ? "特殊" : "无法防御";
+      bits.push(fmt(B.DMG[i]) + " 伤害 · " + type);
+    }
+    if (id === "bossReset") bits.push("空过并回满体力");
+    return bits.join(" · ");
+  }
+  /* 招式类型配色：
+     刀系=红 / 气系=深青 / 特殊=紫 / 无法防御=黑底黄字 / 防御=绿；
+     积攒按资源分成两色：钢铁(A)、盾(C) = 浅红；聚气(B)、屏(D) = 浅蓝（都比攻击色更浅） */
+  const TYPE_META = {
+    1: { key: "blade", name: "刀系" },
+    2: { key: "qi", name: "气系" },
+    3: { key: "special", name: "特殊" },
+    4: { key: "unblock", name: "无法防御" },
+  };
+  function typeChip(key, resIdx) {
+    if (typeof key === "number") {
+      const m = TYPE_META[key] || { key: "none", name: "攻击" };
+      return `<span class="tp tp-${m.key}">${m.name}</span>`;
+    }
+    if (key === "gain") {
+      const warm = (resIdx === 0 || resIdx === 2);      // A / C → 浅红；B / D → 浅蓝
+      return `<span class="tp ${warm ? "tp-gain-a" : "tp-gain-b"}">积攒</span>`;
+    }
+    return `<span class="tp tp-guard">防御</span>`;
+  }
+  function defText(id) {
+    const i = B.ACT[id];
+    if (B.DEF_ALL[i] && id !== "bossReset") return "挡下一切攻击";
+    const d = [];
+    if (B.DEF_B[i]) d.push("挡刀系");
+    if (B.DEF_Q[i]) d.push("挡气系");
+    return d.join(" · ");
+  }
+  /** 动作效果（结构化，带颜色）——对战按钮用这份 */
+  function fxChip(id) {
+    const i = B.ACT[id], t = B.ATK[i];
+    const segs = [];
+    if (B.DMG[i] > 0) {
+      segs.push(`${typeChip(t)} ${fmt(B.DMG[i])} 伤害`);
+      if (defText(id)) segs.push(`${typeChip("guard")} ${defText(id)}`);
+      return segs.join(" · ");
+    }
+    const gains = [];
+    let gainRes = -1;
+    for (let r = 0; r < 4; r++) if (B.GAIN[i][r]) { gains.push("+" + B.GAIN[i][r] + " " + resLabel(r)); gainRes = r; }
+    if (gains.length) segs.push(`${typeChip("gain", gainRes)} ${gains.join(" ")}`);
+    if (defText(id)) segs.push(`${typeChip("guard")} ${defText(id)}`);
+    return segs.join(" · ");
+  }
+  /** 出招表用：在 fxChip 基础上补一句"特殊攻击怎么防"的说明 */
+  function moveFx(id) {
+    const i = B.ACT[id];
+    const note = B.ATK[i] === 3 ? `<i class="tpnote">只能用「圣盾阵」防御</i>` : "";
+    return fxChip(id) + note;
+  }
+
+  /* Boss 形态 → 实际生效的 Boss 配置 id（ChatGPT「认真」= 星体咏唱版） */
+  function bossEffectiveId(baseId, serious) {
+    const cfg = (B.BOSS_MODES && B.BOSS_MODES[baseId]) ? B.BOSS_MODES[baseId] : null;
+    const m = cfg ? cfg[serious ? "serious" : "normal"] : null;
+    return (m && m.id) ? m.id : baseId;
+  }
+  function seriousReady(baseId) { return !(B.BOSS_SERIOUS_READY && B.BOSS_SERIOUS_READY[baseId] === false); }
+  function portraitStem(baseId, serious) { return serious ? `boss_${baseId}_serious` : `boss_${baseId}_q`; }
+  function faceStem(baseId, serious) { return serious ? `boss_${baseId}_serious_face` : `boss_${baseId}_face`; }
+  /** 资源地址：单文件内嵌模式（build.py --inline-assets）会用 BOBO_ASSETS 里的 data URI 顶掉相对路径 */
+  function assetUrl(p) {
+    const A = window.BOBO_ASSETS;
+    return (A && A[p]) ? A[p] : p;
+  }
+  // 图加载成功后：给容器挂 hasimg（换掉斜纹占位底）并隐藏底下的文字占位
+  const IMG_ONLOAD = "this.parentNode.classList.add('hasimg');var l=this.parentNode.querySelector('.lbl');if(l){l.style.display='none';}";
+  // 加载失败时按 data-alts 里的候选顺序往下退（PNG → WebP → 整张立绘 → 文字占位）
+  const IMG_ONERROR = "var a=this.dataset.alts?this.dataset.alts.split('|'):[];if(a.length){this.dataset.alts=a.length>1?a.slice(1).join('|'):'';this.src=a[0];}else{this.remove();}";
+  /** 立绘取图：优先 PNG，缺少 PNG 时自动回退 WebP，两者都没有就移除图片、露出文字占位 */
+  function bossImg(baseId, serious, cls) {
+    const stem = portraitStem(baseId, serious);
+    return `<img${cls ? ` class="${cls}"` : ""} src="${assetUrl(`assets/${stem}.png`)}" data-fb="${
+      assetUrl(`assets/${stem}.webp`)}" alt="" decoding="async" onload="${IMG_ONLOAD}"
+      onerror="if(this.dataset.fb){this.src=this.dataset.fb;this.dataset.fb='';}else{this.remove();}">`;
+  }
+  /** 对战页头像：优先用立绘裁出来的脸部特写，没有就退回整张立绘 */
+  function bossAvatarImg(baseId, serious) {
+    const stems = [faceStem(baseId, serious), portraitStem(baseId, serious)];
+    const urls = [];
+    stems.forEach((stem) => { urls.push(`assets/${stem}.png`, `assets/${stem}.webp`); });
+    const list = urls.map(assetUrl);
+    return `<img src="${list[0]}" data-alts="${esc(list.slice(1).join("|"))}" alt="" decoding="async"
+      onload="${IMG_ONLOAD}" onerror="${IMG_ONERROR}">`;
+  }
+
+  function robotSvg(kind) {
+    const color = kind === "veteran" ? "#8b5cf6" : "#4a4a52";
+    const glow = kind === "veteran" ? 'style="filter:drop-shadow(0 0 4px rgba(139,92,246,.9))"' : "";
+    return `<svg viewBox="0 0 48 48" width="34" height="34" ${glow} aria-hidden="true">
+      <g fill="none" stroke="${color}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="10" y="16" width="28" height="22" rx="7"/>
+        <path d="M24 16v-5"/><circle cx="24" cy="8" r="2.4"/>
+        <path d="M6 24v8M42 24v8"/>
+      </g>
+      <circle cx="18.5" cy="26" r="2.4" fill="${color}"/>
+      <circle cx="29.5" cy="26" r="2.4" fill="${color}"/>
+      <path d="M19 33.5h10" stroke="${color}" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    </svg>`;
+  }
+  function personSvg() {
+    return `<svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+      <g fill="none" stroke="#0d0d0f" stroke-width="2.8" stroke-linecap="round">
+        <circle cx="24" cy="15" r="6.5"/><path d="M12 40c2-8 6.5-12 12-12s10 4 12 12"/>
+      </g></svg>`;
+  }
+  function gearSvg() {
+    return `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3.3"/>
+        <path d="M12 2.6l1.5 2.2 2.6-.7.6 2.6 2.4 1.2-1.2 2.4.7 2.6-2.6.6-1.2 2.4-2.4-1.2-2.6.7-.6-2.6L4.6 14.5l1.2-2.4-.7-2.6 2.6-.6L9.9 6.5l2.6.7z"/>
+      </g></svg>`;
+  }
+  function chevSvg() {
+    return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path d="M15 4.5L7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"/>
+    </svg>`;
+  }
+  /** 立绘位：通常形态 = Q 版，认真形态 = 正比；图片缺失时回落到文字占位 */
+  function bossArt(baseId, serious, size) {
+    const b = B.BOSSES[bossEffectiveId(baseId, serious)] || {};
+    const cls = size === "big" ? (serious ? "tall" : "square") : (size === "small" ? "small" : "mid");
+    return `<div class="art ${cls}">
+      ${bossImg(baseId, serious)}
+      <div class="lbl">${esc(b.name || "")}<span>${serious ? "认真形态 · 正比立绘" : "通常形态 · Q 版立绘"}</span></div>
+    </div>`;
+  }
+  function avatarBox(side) {
+    if (side.isHuman) return `<div class="art small plain">${personSvg()}</div>`;
+    if (side.kind === "boss") {
+      const baseId = side.baseBossId || side.boss;
+      const short = BOSS_SHORT[baseId] || "Boss";
+      return `<div class="art small plain">${bossAvatarImg(baseId, !!side.serious)}<span class="lbl">${esc(short)}</span></div>`;
+    }
+    return `<div class="art small plain">${robotSvg(side.kind === "veteran" ? "veteran" : "normal")}</div>`;
+  }
+
+  function topbar(o) {
+    o = o || {};
+    const left = o.back
+      ? `<button class="back" data-act="${o.back}" aria-label="返回">${chevSvg()}</button>`
+      : `<span class="logo" aria-hidden="true">波</span>`;
+    return `<header class="topbar">
+      <div class="brand${o.sm ? " sm" : ""}">${left}
+        <div><h1>${o.title}</h1>${o.sub ? `<p>${o.sub}</p>` : ""}</div>
+      </div>
+      <span class="spacer"></span>
+      <div class="row">${o.right || ""}<button class="iconbtn" data-act="settings" title="设置" aria-label="设置">${gearSvg()}</button></div>
+    </header>`;
+  }
+
+  /* ------------------------------------------------------------- 首页 */
+  function paceCard() {
+    const rt = S.setup.pace === "realtime";
+    return `<div class="card">
+      <div class="ribbon"><span>出手节奏</span></div>
+      <div class="row">
+        <div class="seg" role="group" aria-label="出手节奏">
+          <button data-act="pace:normal" aria-pressed="${!rt}">通常</button>
+          <button data-act="pace:realtime" aria-pressed="${rt}">拟真 · 3 秒</button>
+        </div>
+        <span class="muted">${rt
+          ? "拟真：每回合只有 3 秒，超时自动随机出招 —— 模拟原作在线下课间对局的那种紧张感。"
+          : "通常：正常出招，没有时间限制，可以慢慢想。"}</span>
+      </div>
+    </div>`;
+  }
+
+  function screenHome() {
+    return `<div class="screen">
+      ${topbar({
+      title: "波波<em>攒</em>",
+      sub: "同时出招 · 攒资源 · 攻防一体",
+      right: `<button class="ghost" data-act="help">玩法说明</button>
+              <button class="ghost" data-act="training">AI 数据</button>`,
+    })}
+      <div class="modes">
+        <button class="mode" data-act="setup:normal">
+          <h3>普通模式</h3>
+          <p>与 bot 单挑 1V1。两种难度可选。</p>
+          <span class="tag"><i>普通 bot / 历战 bot</i></span>
+        </button>
+        <button class="mode" data-act="setup:boss">
+          <h3>Boss 战</h3>
+          <p>竟然可以挑战 AI 娘们！？初代版本有三位超模 boss：DeepSeek、ChatGPT、豆包。</p>
+          <span class="tag"><i>3 位 Boss · 之后还会增加</i></span>
+        </button>
+      </div>
+
+      <div class="row" style="margin:2px 0 18px">
+        <button class="cta" data-act="setup:normal">开始对战</button>
+        <button class="ghost" data-act="help">完整玩法说明</button>
+      </div>
+
+      ${moveTable()}
+      ${paceCard()}
+
+      <footer class="foot">
+        波波攒 V 0.1 测试版 | 作者：B站@${extLink(AUTHOR_NAME, AUTHOR_URL, true)}<br>
+        本作遵循 CC BY-NC-SA 4.0 协议
+      </footer>
+    </div>`;
+  }
+
+  /** 首页出招表：动作 / 消耗 / 效果。数据直接读引擎，以后改数值这里自动同步 */
+  function moveTable() {
+    const groups = B.ACTION_GROUPS.map((g) => `
+      <div class="mt-group">
+        <div class="mt-title">${esc(g.title)}</div>
+        <ul>
+          ${g.ids.map((id) => `<li>
+            <b>${esc(B.ACTION_CN[id])}</b>
+            <em>${esc(costText(id) || "免费")}</em>
+            <small>${moveFx(id)}</small>
+          </li>`).join("")}
+        </ul>
+      </div>`).join("");
+    return `<div class="card">
+      <div class="ribbon"><span>出招表</span></div>
+      <div class="movetable">${groups}</div>
+      <ul class="notes" style="margin-top:12px">
+        <li>双方<b>同时出招、同时结算</b>；每种资源上限 5 个，<b>资源对敌人可见</b>。</li>
+        <li>体力上限 5，先被打空就输；<b>同一回合双方同时归零算平局</b>。</li>
+      </ul>
+    </div>`;
+  }
+
+  /* ------------------------------------------------------- 普通模式 / 难度 */
+  function screenNormalSetup() {
+    const d = S.setup.difficulty;
+    return `<div class="screen">
+      ${topbar({ title: "普通模式", sub: "与 bot 单挑 1V1", back: "home", sm: true })}
+      <div class="pickgrid">
+        <button class="pick ${d === "normal" ? "active" : ""}" data-act="difficulty:normal">
+          <div class="row" style="align-items:flex-start;gap:14px">
+            <div class="art small plain">${robotSvg("normal")}</div>
+            <div><h3>普通 bot</h3><div class="role">Normal bot</div></div>
+          </div>
+          <p>打几把这个大概你就熟悉规则了 uwu</p>
+          <div class="enter">${d === "normal" ? "✓ 当前选择" : "点击选择"}</div>
+        </button>
+        <button class="pick ${d === "veteran" ? "active" : ""}" data-act="difficulty:veteran">
+          <div class="row" style="align-items:flex-start;gap:14px">
+            <div class="art small plain">${robotSvg("veteran")}</div>
+            <div><h3>历战 bot</h3><div class="role">Veteran bot</div></div>
+          </div>
+          <p>通过自对弈训练出来的策略，会读你的资源，稍微有一点点难度哦？</p>
+          <div class="enter">${d === "veteran" ? "✓ 当前选择" : "点击选择"}</div>
+        </button>
+      </div>
+      ${paceCard()}
+      <div class="row" style="margin-top:6px">
+        <button class="cta" data-act="start">进入战斗</button>
+        <button class="ghost" data-act="home">返回首页</button>
+      </div>
+    </div>`;
+  }
+
+  /* --------------------------------------------------------- Boss 列表 */
+  function screenBossList() {
+    const ids = B.BOSS_LIST || ["deepseek", "chatgpt", "doubao"];
+    const cleared = clearedBosses();
+    const cards = ids.map((id) => {
+      const b = B.BOSSES[id] || {};
+      const ready = seriousReady(id);
+      const cl = !!cleared[id] || (ready && !!cleared[clearKey(id, true)]);
+      return `<button class="pick ${cl ? "cleared" : ""}" data-act="boss:${id}">
+        ${bossArt(id, false, "mid")}
+        <h3>${esc(b.name || id)}${cl ? clearBadge() : ""}</h3>
+        <p>${esc(BOSS_BIO[id] || "")}</p>
+        <div class="enter">（点击进入资料页）</div>
+      </button>`;
+    }).join("");
+    return `<div class="screen">
+      ${topbar({ title: "Boss 战", sub: "选一位 boss 进入她的资料页", back: "home", sm: true })}
+      <div class="pickgrid">${cards}</div>
+      <div class="row" style="margin-top:6px"><button class="ghost" data-act="home">返回首页</button></div>
+    </div>`;
+  }
+
+  /* --------------------------------------------------- Boss 资料页（个人页） */
+  function screenBossDetail() {
+    const baseId = S.setup.bossId;
+    const ready = seriousReady(baseId);
+    const serious = ready && !!S.setup.bossSerious;
+    const effId = bossEffectiveId(baseId, serious);
+    const b = B.BOSSES[effId] || B.BOSSES[baseId] || {};
+    const cl = !!clearedBosses()[clearKey(baseId, serious)];
+    const names = BOSS_SKILL_NAMES[effId] || BOSS_SKILL_NAMES[baseId] || [];
+    return `<div class="screen">
+      ${topbar({
+      title: esc(b.name || baseId),
+      sub: serious ? "认真形态" : "通常形态",
+      back: "setup:boss",
+      sm: true,
+      right: cl ? clearBadge() : "",
+    })}
+      <div class="card">
+        <div class="row" style="align-items:flex-start;gap:18px">
+          ${bossArt(baseId, serious, "big")}
+          <div style="flex:1;min-width:230px;align-self:stretch;display:flex;flex-direction:column;gap:12px">
+            <div class="ribbon red"><span>${serious ? "认真" : "通常"}形态</span></div>
+            <p style="font-size:14px;line-height:1.95;margin:0">${esc(BOSS_BIO[baseId] || "")}</p>
+            <div class="row">
+              <div class="seg" role="group" aria-label="形态开关">
+                <button data-act="bossmode:normal" aria-pressed="${!serious}">通常</button>
+                ${ready
+          ? `<button data-act="bossmode:serious" aria-pressed="${serious}">认真</button>`
+          : `<button class="lock" disabled aria-pressed="false" title="将在未来开放">认真 · 将在未来开放</button>`}
+              </div>
+              ${serious
+          ? `<span class="tag"><i>立绘为正比 · 认真形态</i></span>`
+          : `<span class="muted">${ready ? "右边的开关可以切到「认真」形态。" : "这位 boss 的认真形态将在未来开放。"}</span>`}
+            </div>
+            <div class="divider"></div>
+            <div class="ribbon"><span>特殊技能</span></div>
+            <ul class="skills" style="margin:0">${names.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>
+            <p class="muted" style="margin:0">技能效果就不在这里解释了 —— 到对局里自己试出来吧。</p>
+            <div class="divider"></div>
+            <div class="row" style="margin-top:auto">
+              <button class="cta" data-act="start">挑战${serious ? "认真" : "通常"}形态</button>
+              <button class="ghost" data-act="setup:boss">返回列表</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${paceCard()}
+    </div>`;
+  }
+
+  /* --------------------------------------------------------- 战斗界面 */
+  function hpBar(side) {
+    const maxHp = side.maxHp || B.MAX_HP;
+    let cells = "";
+    for (let i = 0; i < maxHp; i++) {
+      const fill = Math.max(0, Math.min(1, side.hp - i));
+      const cls = fill >= 1 ? "" : (fill > 0 ? " half" : " dead");
+      cells += `<span class="hpcell${cls}"><i style="width:${(fill * 100).toFixed(0)}%"></i></span>`;
+    }
+    return `<div class="hp">${cells}</div>`;
+  }
+  function resRow(side) {
+    return `<div class="res">${[0, 1, 2, 3].map((r) => {
+      const n = side.res[r];
+      return `<div class="chip${n >= B.MAX_RES ? " full" : ""}">
+        <b>${fmt(n)}</b><span class="lab">${esc(resLabel(r))}</span>
+      </div>`;
+    }).join("")}</div>`;
+  }
+  function sidePanel(side, idx) {
+    const st = S.battle;
+    const isMe = !!side.isHuman;
+    const maxHp = side.maxHp || B.MAX_HP;
+    const fading = (S.nameAnim && S.nameAnim.name === side.name && Date.now() < S.nameAnim.until) ? " fading" : "";
+    let tail = "";
+    if (side.kind === "boss") {
+      const effId = side.boss;
+      const names = BOSS_SKILL_NAMES[effId] || [];
+      const used = side.skillUsed || {};
+      tail = `<ul class="skills">${names.map((n) => {
+        const u = !!used[n];
+        return `<li class="${u ? "used" : ""}">${esc(n)}${u ? "<small>已使用</small>" : ""}</li>`;
+      }).join("")}</ul>`;
+      const chips = [];
+      if (st && st.deepseekState) {
+        chips.push(st.deepseekState === "peak" ? "梁文峰 · Boss 伤害 ×2" : "梁文谷 · 你造成的伤害 ×0.5");
+      }
+      if (effId === "chatgpt_serious" && st && st.star) {
+        const phaseNames = B.STAR_PHASE_NAMES || [];
+        const cur = st.star.phase >= 0 ? (phaseNames[st.star.phase] || "") : "待咏唱";
+        const next = st.star.phase < 3 ? ((phaseNames[st.star.phase + 1] || "").split(" ")[1] || "") : "";
+        chips.push("星体咏唱：" + cur + (st.star.phase < 0 && next ? " → " + next : ""));
+      }
+      if (chips.length) tail += `<div class="buffs">${chips.map((c) => `<span class="buff">${esc(c)}</span>`).join("")}</div>`;
+    } else if (side.kind === "veteran") {
+      tail = `<div class="buffs"><span class="buff">紫色描边 · 自对弈训练的历战策略</span></div>`;
+    } else if (!isMe) {
+      tail = `<div class="buffs"><span class="buff">普通难度 · 隐藏战术</span></div>`;
+    }
+    const sub = isMe
+      ? `体力上限 ${maxHp}`
+      : side.kind === "boss"
+        ? (side.serious ? "Boss · 认真形态" : "Boss · 通常形态")
+        : esc(side.subtitle || (side.kind === "veteran" ? "历战难度" : "普通难度"));
+    const flashing = (!isMe && S.nameAnim && S.nameAnim.name === side.name && Date.now() < S.nameAnim.until) ? " flash" : "";
+    return `<section class="side ${isMe ? "me" : "enemy"}${flashing}">
+      <div class="sidehead">
+        ${avatarBox(side)}
+        <div><h3 class="boss-name${fading}">${esc(side.name)}</h3><div class="sub">${sub}</div></div>
+        ${idx === 1 ? `<span class="pill">第 ${st.turn + 1} 回合</span>` : `<span class="pill">你</span>`}
+      </div>
+      ${hpBar(side)}
+      <div class="hpline"><span class="hpnum">${fmt(Math.max(0, side.hp))}/${maxHp}</span><span class="muted">体力</span></div>
+      ${resRow(side)}
+      ${tail}
+    </section>`;
+  }
+  function actionGroups(legal) {
+    return B.ACTION_GROUPS.map((g) => `
+      <div class="group g-${g.key}">
+        <h4>${esc(g.title)}</h4>
+        <div class="grid">
+          ${g.ids.map((id) => {
+      const i = B.ACT[id];
+      const ok = !!legal[i];
+      const cost = costText(id);
+      return `<button class="abtn" data-act="play:${id}" ${ok ? "" : "disabled"}>
+              <b><span>${esc(B.ACTION_CN[id])}</span><em>${esc(cost || "免费")}</em></b>
+              <small>${fxChip(id)}</small>
+            </button>`;
+    }).join("")}
+        </div>
+      </div>`).join("");
+  }
+  function recentItem(rec) {
+    const bits = [`你 <b>${esc(actName(rec.actions[0]))}</b>`, `对手 <b>${esc(actName(rec.actions[1]))}</b>`,
+      `体力 你 ${fmt(Math.max(0, rec.hpAfter[0]))} · 对手 ${fmt(Math.max(0, rec.hpAfter[1]))}`];
+    return `<li><span class="t">${rec.turn === 0 ? "开局" : "第 " + rec.turn + " 回合"}</span>
+      <span class="txt">${bits.join("　")}${rec.notes && rec.notes.length ? "<br>" + esc(rec.notes.join("；")) : ""}</span></li>`;
+  }
+  function quickbar(legal, st) {
+    if (!st || st.finished) return "";
+    const ids = ["gatherA", "gatherB", "gatherC", "gatherD"];
+    return `<div class="quickbar">${ids.map((id) => {
+      const i = B.ACT[id];
+      const r = "ABCD".indexOf(id.slice(-1));
+      return `<button data-act="play:${id}" ${legal[i] ? "" : "disabled"}>
+        <b>${esc(B.ACTION_CN[id])}</b><small>+1 ${esc(resShort(r))}</small>
+      </button>`;
+    }).join("")}<button class="more" data-act="scrollactions"><b>更多</b><small>全部动作</small></button></div>`;
+  }
+  // 悬浮快捷条要放在 .screen 之外：.screen 的入场动画带 transform，
+  // fixed 元素一旦落在被 transform 的容器里就会退化成相对定位（手机上会闪一下位置）
+  function screenBattle() {
+    const st = S.battle;
+    const legal = B.legalFor(st, 0);
+    const recs = st.records.slice(-4).reverse();
+    const sub = (st.mode === "boss"
+      ? (st.bossId === "chatgpt_serious" ? "Boss 战 · 认真形态" : "Boss 战")
+      : "普通模式 · " + (st.difficulty === "veteran" ? "历战" : "普通")) + (st.realtime ? " · 拟真 3 秒" : "");
+    return `<div class="screen">
+      ${topbar({
+      title: "对战中",
+      sub: esc(st.sides[1].name) + " · " + esc(sub),
+      sm: true,
+      right: `<button class="ghost" data-act="log">战斗日志</button>`,
+    })}
+
+      <div class="arena">${sidePanel(st.sides[0], 0)}${sidePanel(st.sides[1], 1)}</div>
+
+      <div class="center">
+        ${st.realtime ? `<div>
+          <div class="timer${S.timerLeft <= 1 ? " danger" : ""}" id="timerbar"><i style="width:${(S.timerLeft / 3 * 100).toFixed(1)}%"></i></div>
+          <div class="timertext" id="timertext">剩余 ${S.timerLeft.toFixed(1)} 秒 · 超时随机出招</div>
+        </div>` : ""}
+        <div class="resolve">
+          <div class="ribbon"><span>${st.finished ? "本局已结束" : "本回合结算"}</span></div>
+          ${S.lastRecord
+          ? `<div class="vs">
+              <span class="act">你：${esc(actName(S.lastRecord.actions[0]))}</span>
+              <span class="muted">同时结算</span>
+              <span class="act red">对手：${esc(actName(S.lastRecord.actions[1]))}</span>
+            </div>
+            <ul class="notes">${S.lastRecord.notes && S.lastRecord.notes.length
+            ? S.lastRecord.notes.map((n) => `<li class="flavor">${esc(n)}</li>`).join("")
+            : "<li>双方这次都没有造成伤害</li>"}</ul>`
+          : `<span class="muted">出招后立即同时结算：双方动作互相克制 —— 例如你出长刀而对手架盾，这次攻击就被挡下。</span>`}
+        </div>
+        ${st.notes && st.notes.length
+          ? `<div class="resolve"><ul class="notes">${st.notes.map((n) => `<li class="flavor">${esc(n)}</li>`).join("")}</ul></div>`
+          : ""}
+      </div>
+
+      <div class="actions" id="actions">
+        ${st.finished
+          ? `<div class="group"><h4>本局已结束</h4>
+             <div class="row"><span class="muted">战斗已结算，正在返回结算页…</span><span class="spacer"></span>
+             <button class="cta" data-act="replay">查看战斗日志复盘</button>
+             <button class="ghost" data-act="home">返回首页</button></div></div>`
+          : `<div class="row" style="margin-bottom:12px">
+             <div class="ribbon red" style="margin:0"><span>选择本回合动作</span></div>
+             <span class="kbd-hint">键盘：Q W E R / A S D F / Z X C V B N</span>
+           </div>
+           ${actionGroups(legal)}
+           <div class="row" style="margin-top:14px">
+             <span class="muted">资源不足的动作会自动变灰；所有动作同一时间结算。</span><span class="spacer"></span>
+             <button class="ghost" data-act="quit">认输并查看日志</button>
+           </div>`}
+      </div>
+
+      ${recs.length
+        ? `<div class="log" style="margin-top:18px"><h4>最近回合</h4><ol>${recs.map(recentItem).join("")}</ol></div>`
+        : ""}
+    </div>
+    ${quickbar(legal, st)}`;
+  }
+
+  /* --------------------------------------------------------- 结算 / 复盘 */
+  function screenResult() {
+    const st = S.battle;
+    const r = st.result;
+    const label = r === "win" ? "胜利" : r === "lose" ? "败北" : "平局";
+    const bossClear = r === "win" && st.mode === "boss" && st.bossId;
+    if (bossClear) {
+      const base = st.sides[1].baseBossId || st.bossId;
+      markCleared(clearKey(base, !!st.sides[1].serious));
+    }
+    let dmgIn = 0, dmgOut = 0;
+    st.records.forEach((rec) => { dmgIn += rec.dmg[0]; dmgOut += rec.dmg[1]; });
+    return `<div class="screen">
+      ${topbar({ title: "战斗结束", sub: `${esc(st.sides[1].name)} · ${st.turn} 回合`, sm: true })}
+      <div class="card result-hero ${r}">
+        <div class="big">${label}</div>
+        ${bossClear ? `<p style="margin:10px 0 0">${clearBadge()}<span class="muted"> 你击败了 ${esc(st.sides[1].name)}，Boss 列表上已经记下这一笔</span></p>` : ""}
+        <p class="muted" style="margin-top:10px">${r === "win" ? "你把对手的体力打空了。"
+        : r === "lose" ? "你的体力被打空 —— 换个节奏再来一局试试。"
+          : "双方同一回合归零，判定为平局。"}</p>
+        <div class="stats">
+          <div class="stat"><b>${st.turn}</b><span>回合数</span></div>
+          <div class="stat"><b>${fmt(dmgOut)}</b><span>你造成的伤害</span></div>
+          <div class="stat"><b>${fmt(dmgIn)}</b><span>你受到的伤害</span></div>
+          <div class="stat"><b>${fmt(Math.max(0, st.sides[0].hp))}</b><span>剩余体力</span></div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="cta" data-act="replay">查看战斗日志</button>
+        <button class="ghost" data-act="rematch">再来一局</button>
+        <button class="ghost" data-act="home">返回首页</button>
+      </div>
+    </div>`;
+  }
+
+  function screenReplay() {
+    const st = S.battle;
+    const recs = st.records;
+    return `<div class="screen">
+      ${topbar({
+      title: "战斗日志复盘",
+      sub: `${esc(st.sides[1].name)} · 共 ${st.turn} 回合`,
+      back: "backToResult",
+      sm: true,
+      right: `<button class="ghost" data-act="copylog">复制日志</button>`,
+    })}
+      <div class="card scroll-x">
+        <table class="replay">
+          <thead><tr><th>回合</th><th>你</th><th>对手</th><th>你受伤</th><th>对手受伤</th><th>体力（你 / 对手）</th><th>备注</th></tr></thead>
+          <tbody>
+            ${recs.map((rec) => `<tr>
+              <td class="num">${rec.turn === 0 ? "开局" : rec.turn}</td>
+              <td>${esc(actName(rec.actions[0]))}</td>
+              <td>${esc(actName(rec.actions[1]))}</td>
+              <td class="num">${fmt(rec.dmg[0])}</td>
+              <td class="num">${fmt(rec.dmg[1])}</td>
+              <td class="num">${fmt(rec.hpAfter[0])} / ${fmt(rec.hpAfter[1])}</td>
+              <td>${esc((rec.notes || []).join("；") || "—")}</td></tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button class="cta" data-act="rematch">再来一局</button>
+        <button class="ghost" data-act="home">返回首页</button>
+      </div>
+    </div>`;
+  }
+
+  function replayText() {
+    const st = S.battle;
+    const lines = ["波波攒 战斗日志",
+      `对手：${st.sides[1].name}｜结果：${st.result === "win" ? "胜利" : st.result === "lose" ? "败北" : "平局"}｜回合数：${st.turn}`, ""];
+    st.records.forEach((rec) => {
+      lines.push(`[${rec.turn === 0 ? "开局" : "第" + rec.turn + "回合"}] 你：${actName(rec.actions[0])} / 对手：${actName(rec.actions[1])}`);
+      lines.push(`  伤害 你${fmt(rec.dmg[0])} 对手${fmt(rec.dmg[1])}｜体力 你${fmt(rec.hpAfter[0])} 对手${fmt(rec.hpAfter[1])}`);
+      if (rec.notes && rec.notes.length) lines.push("  " + rec.notes.join("；"));
+    });
+    return lines.join("\n");
+  }
+
+  /* --------------------------------------------------------- AI 数据 */
+  function screenTraining() {
+    const meta = (B.WEIGHTS && B.WEIGHTS.meta) || null;
+    if (!meta) {
+      return `<div class="screen">
+        ${topbar({ title: "AI 训练数据", sub: "自博弈训练结果", back: "home", sm: true })}
+        <div class="card"><p class="muted">当前 HTML 未内嵌训练数据（构建时未找到训练日志）。</p></div>
+      </div>`;
+    }
+    const pct = (x) => (x * 100).toFixed(2) + "%";
+    const rowFreq = (freq, names) => names.map((n, i) => {
+      const v = (freq && freq[i]) || 0;
+      return v > 0.0005 ? `${n} ${(v * 100).toFixed(1)}%` : null;
+    }).filter(Boolean).join(" · ");
+    return `<div class="screen">
+      ${topbar({ title: "AI 训练数据", back: "home", sm: true })}
+      <div class="card">
+        <div class="ribbon red"><span>作者留言</span></div>
+        <div class="letter">
+          <p>没想到你会点进来！但说实话你也在这里找不到什么特别有用的信息，因为作者在 Machine Learning 上的造纸（？）基本和在 VTuber 领域的造纸差不多，都近乎为 0。</p>
+          <p>不过，既然来都来了，还是稍微说一下训练思路吧。</p>
+          <p>其实我最开始只是想用自对弈 AI 来调整一下数值设计的。然而调着调着我发现，欸，是不是这个东西可以直接干脆训练出一个和人对弈的 AI 出来？于是这次的大多数敌人都采用了这种自对弈训练算法算出来的 AI。</p>
+          <p>其实这次如果纯让 AI 自己打自己，去找最优（不输的）博弈，最后训练出来的是两个特别喜欢打防的乌龟。尽管波波攒的乐趣确实一半在于通过防御赚取资源差，但是也不能一直打防，要不然游戏乐趣在哪里嘛！</p>
+          <p>而且，毕竟训练这个 AI 出来不是为了去发 paper 做算法，而是想办法让人体会到乐趣。人是绝对做不到每次都完美计算完美防住的。所以，我训练 AI 的时候，把参数设置的让 AI 更倾向于进攻，厌恶平局和伤害奖励都给上了。最后训练出来的结果…反正我自己对战的时候是觉得挺好玩的！</p>
+          <p>总之先写到这吧，写得语无伦次的，以后再改一下行文……但希望你玩的开心！</p>
+          <p class="sign">尼芙_Channel　2026.09.22</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ribbon"><span>各 Boss 训练结果（Boss 方胜率）</span></div>
+        <div class="scroll-x"><table class="replay">
+          <thead><tr><th>Boss</th><th>AI 核心标识</th><th>对局数</th><th>Boss 胜率</th><th>平均回合</th></tr></thead>
+          <tbody>${meta.bosses.map((b) => `<tr>
+            <td>${esc(b.name)}</td><td>${esc(b.key)}</td><td class="num">${b.games.toLocaleString()}</td>
+            <td class="num">${pct(b.win1_rate)}</td><td class="num">${b.avg_turns.toFixed(2)}</td></tr>`).join("")}
+          </tbody></table></div>
+        <p class="muted" style="margin-top:8px">DeepSeek 的「梁文峰（峰）」与「梁文谷（谷）」两种状态分别训练成两个独立 AI 核心。</p>
+      </div>
+      <div class="card">
+        <div class="ribbon"><span>技能使用频率（验证 AI 是否真的会用组合技）</span></div>
+        <div class="scroll-x"><table class="replay">
+          <thead><tr><th>模型</th><th>动作分布</th></tr></thead>
+          <tbody>
+            <tr><td>历战（自博弈冠军）</td><td>${esc(rowFreq(meta.duel.freq, meta.actionNames))}</td></tr>
+            ${meta.bosses.map((b) => `<tr><td>${esc(b.name)}</td><td>${esc(rowFreq(b.freq, meta.actionNames))}</td></tr>`).join("")}
+          </tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="ribbon"><span>关于「偏进攻」的处理</span></div>
+        <ul class="notes">${meta.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>
+      </div>
+      <div class="row" style="margin-top:6px"><button class="ghost" data-act="home">返回首页</button></div>
+    </div>`;
+  }
+
+  /* --------------------------------------------------------- 弹窗 */
+  function modalHelp() {
+    return `<div class="modal-mask" data-act="closemodal-bg">
+      <div class="modal">
+        <header><h3>玩法说明</h3><button class="iconbtn" data-act="closemodal" aria-label="关闭">✕</button></header>
+        <div class="body">
+          <h4>一、基本流程</h4>
+          <p>1V1 对战。每个回合双方<b>同时</b>选择 1 个动作，然后统一结算：先同时扣除 / 获得资源，再同时判定伤害。体力上限 5，被打空即失败；<b>同一回合双方同时归零算平局</b>。</p>
+          <h4>二、积攒类动作</h4>
+          <table><tr><th>动作</th><th>效果</th></tr>
+            <tr><td>锻铁</td><td>获得 1 个钢铁（A）</td></tr>
+            <tr><td>攒气</td><td>获得 1 个聚气（B）</td></tr>
+            <tr><td>架盾</td><td>获得 1 个盾（C），本回合抵挡一切刀系攻击</td></tr>
+            <tr><td>屏障</td><td>获得 1 个屏（D），本回合抵挡一切气系攻击</td></tr>
+          </table>
+          <p>每种资源最多 5 个，资源对敌人可见。</p>
+          <h4>三、基础攻击类动作</h4>
+          <table><tr><th>动作</th><th>消耗</th><th>效果</th></tr>
+            <tr><td>小刀</td><td>1A</td><td>刀系，1 伤害</td></tr>
+            <tr><td>能量波</td><td>1B</td><td>气系，1 伤害</td></tr>
+            <tr><td>长刀</td><td>2A</td><td>刀系，2 伤害</td></tr>
+            <tr><td>冲击波</td><td>2B</td><td>气系，2 伤害</td></tr>
+          </table>
+          <h4>四、组合进阶类动作</h4>
+          <table><tr><th>动作</th><th>消耗</th><th>效果</th></tr>
+            <tr><td>圣盾阵</td><td>1C+1D</td><td>本回合挡下一切攻击（毁天灭地除外）</td></tr>
+            <tr><td>气刃斩</td><td>1A+1B</td><td>只能被圣盾阵防御，1 伤害</td></tr>
+            <tr><td>卫护剑</td><td>1A+1C</td><td>视同架盾，同时打出 1.5 伤害的刀系攻击</td></tr>
+            <tr><td>真空波</td><td>1B+1D</td><td>视同屏障，同时打出 1.5 伤害的气系攻击</td></tr>
+            <tr><td>降龙十八掌</td><td>2A+2B+2C+2D</td><td>只能被圣盾阵防御，4 伤害</td></tr>
+            <tr><td>毁天灭地</td><td>3A+3B+3C+3D</td><td>无法被任何手段防御，5 伤害</td></tr>
+          </table>
+          <h4>五、防御关系速查</h4>
+          <ul>
+            <li>刀系（小刀 / 长刀 / 卫护剑）：被 架盾、卫护剑、圣盾阵 挡下</li>
+            <li>气系（能量波 / 冲击波 / 真空波）：被 屏障、真空波、圣盾阵 挡下</li>
+            <li>气刃斩 / 降龙十八掌：只有圣盾阵能挡</li>
+            <li>毁天灭地：无法防御</li>
+          </ul>
+          <h4>六、模式</h4>
+          <ul>
+            <li><b>普通模式</b>：与 bot 单挑 1V1，两种难度可选。「普通 bot」是按《普通难度AI行为提示词 V8》实现的评分式 AI，每局隐藏一种进攻战术；「历战 bot」（紫色描边机器人）是自对弈训练出来的策略，<b>会读你的资源</b>，每回合保留少量随机出招。</li>
+            <li><b>Boss 战</b>：三位超模 boss（DeepSeek / ChatGPT / 豆包），各自拥有专属特殊技能，技能效果请在实战中自己探索。ChatGPT 另有「认真」形态。后续版本还会继续新增 boss（接口已预留）。</li>
+            <li><b>拟真</b>：每回合只有 3 秒，超时自动随机出招，还原原作在线下课间对局的刺激感。可在首页或战前设置，也可以在设置里调整。</li>
+          </ul>
+          <h4>七、操作与设置</h4>
+          <ul>
+            <li>点击动作按钮，或用键盘 Q W E R（积攒）、A S D F（基础攻击）、Z X C V B N（组合技）。</li>
+            <li>右上角齿轮：可切换资源显示为<b>汉字</b>（钢铁 / 聚气 / 盾 / 屏）或<b>字母</b>（A / B / C / D），以及白天 / 夜间模式。</li>
+            <li>战斗结束后点「查看战斗日志」，可以逐回合复盘这一局。</li>
+          </ul>
+        </div>
+      </div></div>`;
+  }
+
+  function modalSettings() {
+    const s = S.settings;
+    const han = s.res === "han";
+    const dark = s.theme === "dark";
+    const rt = S.setup.pace === "realtime";
+    return `<div class="modal-mask" data-act="closemodal-bg">
+      <div class="modal" style="max-width:460px">
+        <header><h3>设置</h3><button class="iconbtn" data-act="closemodal" aria-label="关闭">✕</button></header>
+        <div class="body">
+          <div class="switch-row">
+            <div><div class="t">资源显示</div><div class="d">当前：${han ? "汉字（钢铁 / 聚气 / 盾 / 屏）" : "字母（A / B / C / D）"}</div></div>
+            <button class="tgl" data-act="setres:${han ? "letter" : "han"}" aria-pressed="${!han}" aria-label="切换资源显示"></button>
+          </div>
+          <div class="switch-row">
+            <div><div class="t">界面主题</div><div class="d">当前：${dark ? "夜间模式" : "白天模式"}</div></div>
+            <button class="tgl" data-act="settheme:${dark ? "light" : "dark"}" aria-pressed="${dark}" aria-label="切换白天 / 夜间模式"></button>
+          </div>
+          <div class="switch-row">
+            <div><div class="t">出手节奏</div><div class="d">下一局生效，也可以在战前设置</div></div>
+            <div class="seg" role="group" aria-label="出手节奏">
+              <button data-act="pace:normal" aria-pressed="${!rt}">通常</button>
+              <button data-act="pace:realtime" aria-pressed="${rt}">拟真</button>
+            </div>
+          </div>
+          <div class="switch-row" style="display:block">
+            <div class="t">声明</div>
+            <div class="declare">
+              <p>作者：B站@${extLink(AUTHOR_NAME, AUTHOR_URL, true)}</p>
+              <p>部分立绘来源于：B站@${extLink(ARTIST_NAME, ARTIST_URL)}</p>
+            </div>
+          </div>
+          <p class="muted" style="margin-top:12px">设置会保存在本地浏览器（localStorage）。</p>
+        </div>
+      </div></div>`;
+  }
+
+  /* --------------------------------------------------------- 渲染 */
+  function render() {
+    applyTheme();
+    // 阶段主题（ChatGPT 认真）：给 body 挂 data-phase，背景会随阶段渐变
+    const st = S.battle;
+    const phaseKey = (st && st.star && st.star.phase >= 0 && st.sides[1].boss === "chatgpt_serious")
+      ? (B.STAR_PHASES || [])[st.star.phase] : null;
+    if (phaseKey) document.body.setAttribute("data-phase", phaseKey);
+    else document.body.removeAttribute("data-phase");
+    let bg = document.getElementById("phase-bg");
+    if (!bg) { bg = document.createElement("div"); bg.id = "phase-bg"; document.body.appendChild(bg); }
+
+    let html = "";
+    if (S.screen === "home") html = screenHome();
+    else if (S.screen === "setup") html = (S.setup.mode === "boss") ? screenBossList() : screenNormalSetup();
+    else if (S.screen === "bossdetail") html = screenBossDetail();
+    else if (S.screen === "battle") html = screenBattle();
+    else if (S.screen === "result") html = screenResult();
+    else if (S.screen === "replay") html = screenReplay();
+    else if (S.screen === "training") html = screenTraining();
+    app.innerHTML = html;
+
+    let m = document.getElementById("modal-root");
+    if (!m) { m = document.createElement("div"); m.id = "modal-root"; document.body.appendChild(m); }
+    m.innerHTML = S.modal === "help" ? modalHelp() : S.modal === "settings" ? modalSettings() : "";
+  }
+
+  /* --------------------------------------------------------- 流程控制 */
+  function startBattle() {
+    const realtime = S.setup.pace === "realtime";
+    if (S.setup.mode !== "boss") {
+      S.battle = B.createBattle({
+        difficulty: S.setup.difficulty, realtime,
+        veteranModel: B.model("veteran"),
+      });
+    } else {
+      const baseId = S.setup.bossId;
+      const serious = seriousReady(baseId) && !!S.setup.bossSerious;
+      const effId = bossEffectiveId(baseId, serious);
+      const st0 = B.createBattle({ bossId: baseId, serious, realtime, bossModel: B.model("boss_" + effId) });
+      if (effId === "deepseek") {
+        st0.sides[1].model = B.model(st0.deepseekState === "peak" ? "boss_deepseek_peak" : "boss_deepseek_valley");
+      }
+      S.battle = st0;
+    }
+    S.lastRecord = null;
+    S.screen = "battle";
+    render();
+    if (realtime) startTimer();
+  }
+
+  function startTimer() {
+    stopTimer();
+    S.timerLeft = 3.0;
+    S.timer = setInterval(() => {
+      S.timerLeft = Math.max(0, S.timerLeft - 0.1);
+      const bar = document.getElementById("timerbar");
+      const txt = document.getElementById("timertext");
+      if (bar && bar.firstElementChild) bar.firstElementChild.style.width = (S.timerLeft / 3) * 100 + "%";
+      if (bar) bar.className = "timer" + (S.timerLeft <= 1 ? " danger" : "");
+      if (txt) txt.textContent = "剩余 " + S.timerLeft.toFixed(1) + " 秒 · 超时随机出招";
+      if (S.timerLeft <= 0) {
+        const legal = B.legalFor(S.battle, 0);
+        const pool = [];
+        for (let a = 0; a < B.ACTION_IDS.length; a++) if (legal[a]) pool.push(B.ACTION_IDS[a]);
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        toast("超时！自动随机出招：" + B.ACTION_CN[pick]);
+        doPlay(pick);
+      }
+    }, 100);
+  }
+  function stopTimer() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+
+  function doPlay(id) {
+    stopTimer();
+    if (!S.battle || S.battle.finished) return;   // 已结束的对局忽略输入
+    const rec = B.playTurn(S.battle, id);
+    S.lastRecord = rec;
+    // Boss 改名特效（星体咏唱推进阶段）：只做名字渐变扫光，不再弹全屏卡片挡操作
+    if (rec && S.battle.phaseEvent) {
+      const ev = S.battle.phaseEvent;
+      S.battle.phaseEvent = null;
+      S.nameAnim = { name: ev.name, until: Date.now() + 1800 };
+    }
+    // 星体爆轰：只震屏，不弹窗
+    const blastNote = ((rec && rec.notes) || []).find((n) => n.indexOf("星体爆轰") >= 0);
+    if (blastNote) {
+      S.nameAnim = { name: S.battle.sides[1].name, until: Date.now() + 1600 };
+      document.body.classList.add("shake");
+      setTimeout(() => document.body.classList.remove("shake"), 520);
+    }
+    if (S.battle.finished) {
+      const battleRef = S.battle;
+      render();
+      setTimeout(() => {
+        // 只有仍停留在这局战斗上时才切到结算页，避免覆盖用户之后的跳转
+        if (S.screen === "battle" && S.battle === battleRef) { S.screen = "result"; render(); }
+      }, 550);
+    } else {
+      render();
+      if (S.battle.realtime) startTimer();
+    }
+  }
+
+  /* --------------------------------------------------------- 事件 */
+  app.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-act]");
+    if (!el) return;
+    const act = el.getAttribute("data-act");
+    if (act.startsWith("play:")) { doPlay(act.slice(5)); return; }
+    if (act.startsWith("setup:")) { S.setup.mode = act.slice(6); S.screen = "setup"; render(); return; }
+    if (act.startsWith("difficulty:")) { S.setup.difficulty = act.slice(11); render(); return; }
+    if (act.startsWith("boss:")) {
+      S.setup.bossId = act.slice(5); S.setup.bossSerious = false;
+      S.screen = "bossdetail"; render(); return;
+    }
+    if (act.startsWith("bossmode:")) {
+      const want = act.slice(9) === "serious";
+      if (want && !seriousReady(S.setup.bossId)) { toast("这位 boss 的认真形态将在未来开放"); return; }
+      S.setup.bossSerious = want; render(); return;
+    }
+    if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); return; }
+    if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); S.modal = "settings"; render(); return; }
+    if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); S.modal = "settings"; render(); return; }
+    switch (act) {
+      case "home": S.screen = "home"; S.modal = null; stopTimer(); render(); break;
+      case "start": S.modal = null; startBattle(); break;
+      case "help": S.modal = "help"; render(); break;
+      case "settings": S.modal = "settings"; render(); break;
+      case "closemodal": S.modal = null; render(); break;
+      case "closemodal-bg": if (e.target === el) { S.modal = null; render(); } break;
+      case "training": S.screen = "training"; render(); break;
+      case "log": stopTimer(); S.screen = "replay"; render(); break;
+      case "backToResult": S.screen = "result"; render(); break;
+      case "replay": S.screen = "replay"; render(); break;
+      case "rematch": startBattle(); break;
+      case "scrollactions": {
+        const box = document.getElementById("actions");
+        if (box && box.scrollIntoView) box.scrollIntoView({ behavior: "smooth", block: "start" });
+        break;
+      }
+      case "quit":
+        stopTimer();
+        if (!S.battle.finished) { S.battle.finished = true; S.battle.result = "lose"; }
+        S.screen = "replay"; render(); break;
+      case "copylog": {
+        const txt = replayText();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(() => toast("战斗日志已复制到剪贴板"), () => toast("复制失败，请手动选择文本"));
+        } else { toast("当前环境不支持自动复制"); }
+        break;
+      }
+      default: break;
+    }
+  });
+
+  // 弹窗挂在 #app 之外，单独监听
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-act]");
+    if (!el || app.contains(el)) return;
+    const act = el.getAttribute("data-act");
+    if (act === "closemodal") { S.modal = null; render(); }
+    else if (act === "closemodal-bg") { if (e.target === el) { S.modal = null; render(); } }
+    else if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); render(); }
+    else if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); render(); }
+    else if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (S.screen !== "battle" || !S.battle || S.battle.finished) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "escape") { S.modal = null; render(); return; }
+    const idx = HOTKEYS.indexOf(k);
+    if (idx < 0) return;
+    const legal = B.legalFor(S.battle, 0);
+    if (!legal[idx]) { toast("资源不足，无法使用「" + B.ACTION_CN[B.ACTION_IDS[idx]] + "」"); return; }
+    e.preventDefault();
+    doPlay(B.ACTION_IDS[idx]);
+  });
+
+  loadSettings();
+  applyTheme();
+  render();
+
+  // 调试 / 自动化测试钩子（不参与游戏逻辑）
+  window.BOBO_DEBUG = {
+    get state() { return S; },
+    play: (id) => doPlay(id),
+    render: () => render(),
+  };
+})();
+
+  </script>
+</body>
+</html>
