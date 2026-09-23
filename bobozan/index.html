@@ -373,6 +373,17 @@ table.replay td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
 .switch-row:last-child{border-bottom:0}
 .switch-row .t{font-size:13.5px;font-weight:800}
 .switch-row .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+/* 多按钮的行：默认并排不换行 */
+.switch-row .btns{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;flex:none}
+/* 音效：喇叭按钮 + 音量条 合成一体 */
+.volwrap{display:flex;align-items:center;gap:10px;flex:none}
+.volwrap input[type=range]{width:150px}
+.spk{width:40px;height:40px;flex:none;padding:0;cursor:pointer;display:grid;place-items:center;
+  border:var(--line);background:var(--white);box-shadow:var(--shadow-sm);color:var(--ink)}
+.spk[aria-pressed="false"]{color:var(--muted-2)}
+.spk:hover{background:var(--yellow);color:#0d0d0f}
+.spk:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.volwrap input[type=range]:disabled{opacity:.4}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0d0d0f;color:#ffd400;border:2px solid #ffd400;
   padding:10px 16px;font-size:13px;font-weight:800;letter-spacing:1px;z-index:60;max-width:88vw;text-align:center}
 .screen{animation:slide .26s ease both}
@@ -487,6 +498,11 @@ body.shake #app{animation:shake .5s ease}
   .movetable li small{grid-column:1 / -1;font-size:11.5px}
   .letter{border-left-width:4px;padding-left:12px}
   .letter p{font-size:13px;line-height:1.95}
+  /* 手机上按钮多的行：按钮换到自己一行、并排、小一号 */
+  .switch-row .btns{flex:1 1 100%;justify-content:flex-end;margin-top:8px}
+  .switch-row .btns .ghost{padding:8px 12px;font-size:12px;min-height:38px}
+  .volwrap input[type=range]{width:118px}
+  .spk{width:38px;height:38px}
   /* 手机版：技能说明出现在技能格子的上方（不要贴到底部去挡出手节奏开关） */
   .skills li .tip{position:absolute;left:0;right:auto;top:auto;bottom:calc(100% + 8px);
     width:max-content;max-width:100%;font-size:12.5px;z-index:60}
@@ -1654,6 +1670,19 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     return AC;
   }
   function sfxEnabled() { return S.settings.sfx !== false; }
+  /** 喇叭图标：开着是声波，关掉是带斜杠 */
+  function speakerSvg(on) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z" fill="currentColor"/>
+      ${on
+        ? `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+             <path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18.2 6.6a7.6 7.6 0 0 1 0 10.8"/>
+           </g>`
+        : `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+             <path d="M15.5 9.5l5 5"/><path d="M20.5 9.5l-5 5"/>
+           </g>`}
+    </svg>`;
+  }
   function noiseBuffer(ctx) {
     if (NOISE) return NOISE;
     const n = Math.floor(ctx.sampleRate * 0.5);
@@ -2640,7 +2669,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
         <div class="body">
           <div class="switch-row">
             <div><div class="t">玩家头像</div><div class="d">选一张本地图片当头像，只存在你这台设备上（不会上传）</div></div>
-            <div class="row">
+            <div class="row btns">
               <button class="ghost" data-act="pickAvatar">${S.avatar ? "更换" : "上传"}</button>
               ${S.avatar ? `<button class="ghost" data-act="removeAvatar">移除</button>` : ""}
             </div>
@@ -2654,27 +2683,17 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
             <button class="tgl" data-act="settheme:${dark ? "light" : "dark"}" aria-pressed="${dark}" aria-label="切换白天 / 夜间模式"></button>
           </div>
           <div class="switch-row">
-            <div><div class="t">出手节奏</div><div class="d">下一局生效，也可以在战前设置</div></div>
-            <div class="seg" role="group" aria-label="出手节奏">
-              <button data-act="pace:normal" aria-pressed="${!rt}">通常</button>
-              <button data-act="pace:realtime" aria-pressed="${rt}">拟真</button>
-            </div>
-          </div>
-          <div class="switch-row">
             <div><div class="t">AI 训练数据</div><div class="d">看看这些对手是怎么练出来的（含作者留言）</div></div>
             <button class="ghost" data-act="openTraining">打开</button>
           </div>
           <div class="switch-row">
-            <div><div class="t">音效</div><div class="d">出招 / 格挡提示音（实时合成，不加载音频文件）</div></div>
-            <div class="seg" role="group" aria-label="音效开关">
-              <button data-act="sfx:on" aria-pressed="${sfxEnabled()}">开</button>
-              <button data-act="sfx:off" aria-pressed="${!sfxEnabled()}">关</button>
+            <div><div class="t">音效</div><div class="d" id="volLabel">${sfxEnabled() ? "当前音量：" + Math.round(sfxVolume() * 100) + "%" : "已关闭"}</div></div>
+            <div class="volwrap">
+              <button class="spk" data-act="sfx:toggle" aria-pressed="${sfxEnabled()}"
+                      aria-label="${sfxEnabled() ? "关闭音效" : "开启音效"}" title="点击开关音效">${speakerSvg(sfxEnabled())}</button>
+              <input type="range" id="volRange" min="0" max="100" step="5" value="${Math.round(sfxVolume() * 100)}"
+                     aria-label="音效音量" ${sfxEnabled() ? "" : "disabled"}>
             </div>
-          </div>
-          <div class="switch-row">
-            <div><div class="t">音量</div><div class="d" id="volLabel">当前：${Math.round(sfxVolume() * 100)}%</div></div>
-            <input type="range" id="volRange" min="0" max="100" step="5" value="${Math.round(sfxVolume() * 100)}"
-                   aria-label="音效音量" style="width:150px;flex:none">
           </div>
           <div class="switch-row" style="display:block">
             <div class="t">声明</div>
@@ -2842,7 +2861,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (!range) return;
     range.addEventListener("input", () => {
       S.settings.vol = Number(range.value) / 100;
-      if (label) label.textContent = "当前：" + Math.round(S.settings.vol * 100) + "%";
+      if (label) label.textContent = "当前音量：" + Math.round(S.settings.vol * 100) + "%";
       saveSettings();
     });
     range.addEventListener("change", () => sfx("click", 1.4));
@@ -2926,7 +2945,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); return; }
     if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); S.modal = "settings"; render(); return; }
     if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); S.modal = "settings"; render(); return; }
-    if (act.startsWith("sfx:")) { S.settings.sfx = act.slice(4) === "on"; saveSettings(); S.modal = "settings"; render(); return; }
+    if (act === "sfx:toggle") { S.settings.sfx = !sfxEnabled(); saveSettings(); S.modal = "settings"; render(); return; }
     if (act === "pickAvatar") { pickAvatar(); return; }
     if (act === "removeAvatar") { clearAvatar(); return; }
     if (act === "skilltip") { toggleSkillTip(el); return; }
@@ -2981,7 +3000,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     else if (act === "cropCancel") { cancelCrop(); }
     else if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); render(); }
     else if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); render(); }
-    else if (act.startsWith("sfx:")) { S.settings.sfx = act.slice(4) === "on"; saveSettings(); render(); }
+    else if (act === "sfx:toggle") { S.settings.sfx = !sfxEnabled(); saveSettings(); render(); }
     else if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); }
   });
 

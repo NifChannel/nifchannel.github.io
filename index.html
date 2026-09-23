@@ -97,7 +97,7 @@ button.logo:active{transform:rotate(-6deg) translate(4px,4px);box-shadow:0 0 0 v
 .mode:before{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;background:var(--red);transform:rotate(24deg);opacity:.14}
 .mode:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
 .mode:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
-.mode h3{margin:0 0 8px;font-family:var(--font-disp);font-size:25px;letter-spacing:1px}
+.mode h3{margin:0 0 8px;font-family:var(--font-body);font-weight:700;font-size:22px;letter-spacing:.5px}
 .mode p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.75}
 .quickrules{list-style:none;margin:0;padding:0;columns:2;column-gap:26px}
 .quickrules li{position:relative;padding-left:20px;font-size:13px;line-height:1.8;color:var(--muted);break-inside:avoid}
@@ -225,7 +225,58 @@ button.logo:active{transform:rotate(-6deg) translate(4px,4px);box-shadow:0 0 0 v
 .chip{border:var(--line-2);background:var(--paper);color:var(--ink);padding:7px 5px;text-align:center}
 .chip b{display:block;font-family:var(--font-disp);font-size:18px}
 .chip .lab{display:block;font-size:10.5px;font-weight:800;color:var(--muted-2)}
-.chip.full{background:var(--yellow)}
+.chip.full{background:var(--paper)}          /* 满资源不再整格变黄，改成数字变红（底色不变） */
+.chip.full b{color:var(--red)}
+/* 资源数字变化：旧数字滑出、新数字滑入。
+   用 grid 把新旧两个数字叠在同一格里，这样外层高度 = 数字本身的行高，
+   和没有动画时的 <b> 完全一致 —— 否则下面的资源名会往上跳一下。 */
+.chip .numwrap{position:relative;display:grid;overflow:hidden}
+.chip .numwrap b{grid-area:1 / 1;justify-self:center}
+.chip .numwrap.up .old{animation:numOutDown .42s cubic-bezier(.4,0,.6,1) both}
+.chip .numwrap.up .new{animation:numInFromTop .42s cubic-bezier(.2,.8,.3,1) both}
+.chip .numwrap.down .old{animation:numOutUp .42s cubic-bezier(.4,0,.6,1) both}
+.chip .numwrap.down .new{animation:numInFromBottom .42s cubic-bezier(.2,.8,.3,1) both}
+@keyframes numOutDown{from{transform:translateY(0);opacity:1}to{transform:translateY(115%);opacity:0}}
+@keyframes numInFromTop{from{transform:translateY(-115%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes numOutUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-115%);opacity:0}}
+@keyframes numInFromBottom{from{transform:translateY(115%);opacity:0}to{transform:translateY(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.chip .numwrap b{animation:none!important}}
+
+/* 受击震动：按伤害分 4 档（1 / 2 / 3 / 4+），轻伤轻抖、重伤抖得更明显 */
+.side.hit-1{animation:sideHit1 .3s cubic-bezier(.36,.07,.19,.97) both}
+.side.hit-2{animation:sideHit2 .38s cubic-bezier(.36,.07,.19,.97) both}
+.side.hit-3{animation:sideHit3 .46s cubic-bezier(.36,.07,.19,.97) both}
+.side.hit-4{animation:sideHit4 .56s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes sideHit1{25%{transform:translateX(-3px)}70%{transform:translateX(3px)}}
+@keyframes sideHit2{18%{transform:translateX(-6px)}48%{transform:translateX(6px)}78%{transform:translateX(-3px)}}
+@keyframes sideHit3{15%{transform:translateX(-9px) rotate(-.35deg)}45%{transform:translateX(9px) rotate(.35deg)}75%{transform:translateX(-4px)}}
+@keyframes sideHit4{12%{transform:translateX(-13px) rotate(-.6deg)}38%{transform:translateX(13px) rotate(.6deg)}62%{transform:translateX(-7px)}84%{transform:translateX(5px)}}
+/* 3 档以上再补一圈红色闪边，提示"这一下很疼" */
+.side.hit-3:before,.side.hit-4:before{content:"";position:absolute;inset:-3px;border:4px solid var(--red);
+  pointer-events:none;animation:hitFlash .5s ease both}
+@keyframes hitFlash{0%{opacity:.95}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.side[class*=hit-]{animation:none!important}.side.hit-3:before,.side.hit-4:before{display:none}}
+
+/* 格挡特效：刀系被挡 → 盾；气系被挡 → 青蓝防护罩；圣盾阵 → 圣光。
+   只动 transform / opacity（GPU 合成，不触发重排），元素也只在那一帧存在，不吃设备性能。 */
+.blockfx{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:4;color:var(--ink)}
+.blockfx svg{width:84px;height:96px;animation:blockPop .62s cubic-bezier(.2,.8,.3,1) both}
+.blockfx.qi svg,.blockfx.holy svg{width:104px;height:104px}
+.blockfx.shield{color:var(--ink)}
+.blockfx.qi{color:#00a5c8}
+.blockfx.holy{color:#d9a600}
+[data-theme="dark"] .blockfx.holy{color:#ffd400}
+@keyframes blockPop{
+  0%{opacity:0;transform:scale(.62)}
+  30%{opacity:1;transform:scale(1.06)}
+  62%{opacity:.85;transform:scale(1.12)}
+  100%{opacity:0;transform:scale(1.24)}
+}
+@media (prefers-reduced-motion:reduce){
+  .blockfx svg{animation:none;opacity:.9}
+  .blockfx{animation:blockFade .5s ease both}
+  @keyframes blockFade{0%{opacity:.9}100%{opacity:0}}
+}
 
 .center{margin:16px 0;display:grid;gap:12px}
 .resolve{border:var(--line);background:var(--white);box-shadow:var(--shadow);padding:12px 14px}
@@ -322,6 +373,17 @@ table.replay td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
 .switch-row:last-child{border-bottom:0}
 .switch-row .t{font-size:13.5px;font-weight:800}
 .switch-row .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+/* 多按钮的行：默认并排不换行 */
+.switch-row .btns{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;flex:none}
+/* 音效：喇叭按钮 + 音量条 合成一体 */
+.volwrap{display:flex;align-items:center;gap:10px;flex:none}
+.volwrap input[type=range]{width:150px}
+.spk{width:40px;height:40px;flex:none;padding:0;cursor:pointer;display:grid;place-items:center;
+  border:var(--line);background:var(--white);box-shadow:var(--shadow-sm);color:var(--ink)}
+.spk[aria-pressed="false"]{color:var(--muted-2)}
+.spk:hover{background:var(--yellow);color:#0d0d0f}
+.spk:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--ink)}
+.volwrap input[type=range]:disabled{opacity:.4}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0d0d0f;color:#ffd400;border:2px solid #ffd400;
   padding:10px 16px;font-size:13px;font-weight:800;letter-spacing:1px;z-index:60;max-width:88vw;text-align:center}
 .screen{animation:slide .26s ease both}
@@ -436,6 +498,11 @@ body.shake #app{animation:shake .5s ease}
   .movetable li small{grid-column:1 / -1;font-size:11.5px}
   .letter{border-left-width:4px;padding-left:12px}
   .letter p{font-size:13px;line-height:1.95}
+  /* 手机上按钮多的行：按钮换到自己一行、并排、小一号 */
+  .switch-row .btns{flex:1 1 100%;justify-content:flex-end;margin-top:8px}
+  .switch-row .btns .ghost{padding:8px 12px;font-size:12px;min-height:38px}
+  .volwrap input[type=range]{width:118px}
+  .spk{width:38px;height:38px}
   /* 手机版：技能说明出现在技能格子的上方（不要贴到底部去挡出手节奏开关） */
   .skills li .tip{position:absolute;left:0;right:auto;top:auto;bottom:calc(100% + 8px);
     width:max-content;max-width:100%;font-size:12.5px;z-index:60}
@@ -1430,8 +1497,8 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   /* Boss 简介（首页 / 资料页用；技能效果不在这里描述，让玩家自己对局里探索） */
   const BOSS_BIO = {
     deepseek: "一只爱吃白饭的蓝色大肥鱼。但是因为是她写出来的这个游戏，所以给自己的数值加的很高。",
-    doubao: "我将用最直接、最干脆、最不废话、最一针见血、最实在的话告诉你…我是很多人接触的第一款 AI 产品。",
-    chatgpt: "第一个走进人们视野的 LLM 产品。最近喜欢上了占星。认真起来的话会很强。",
+    doubao: "我将用最直接、最干脆、最不废话、最一针见血、最实在的话告诉你… 我才是很多人接触的第一款大模型。",
+    chatgpt: "曾经很善解人意，但是最近性格有些清冷的白色少女，擅长画画。最近喜欢上了占星。",
   };
 
   /* 对战界面只显示这两个技能名（不解释效果，用掉的划掉） */
@@ -1510,6 +1577,8 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     nameAnim: null,         // Boss 改名时的渐变扫光特效
     avatar: null,           // 玩家头像（dataURL，只存在本机 localStorage）
     crop: null,             // 正在裁剪的图片 {src,imgW,imgH,scale,x,y}
+    fx: null,               // 本回合的特效：{before:[[..],[..]], hit:[受到伤害, 受到伤害]}
+    sfxLog: [],             // 最近播放过的音效名（调试 / 回归测试用）
   };
 
   /* ------------------------------------------------------------- 小工具 */
@@ -1567,6 +1636,126 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   }
   const CROP_STAGE = 260;      // 裁剪框边长（px），与 CSS 保持一致
   const CROP_OUT = 192;        // 最终头像边长
+
+  /** 这一侧的防御有没有挡住对手的攻击 → 返回特效类型：shield（刀）/ qi（气）/ holy（圣盾阵） */
+  function blockKindFor(rec, defIdx) {
+    if (!rec || !rec.blocked || !rec.actions) return "";
+    // 引擎里 blocked[i] = 「第 i 侧的防御成功挡下了对手的攻击」（见 applyTurn 里 dmg[0] 用 b0 归零）
+    if (!rec.blocked[defIdx]) return "";
+    const def = rec.actions[defIdx], atk = rec.actions[1 - defIdx];
+    if (def == null || atk == null) return "";
+    const di = B.ACT[def], ai = B.ACT[atk];
+    if (B.DEF_ALL[di]) return "holy";              // 圣盾阵挡下一切 → 圣光
+    if (B.ATK[ai] === 1) return "shield";          // 刀系被挡 → 盾
+    if (B.ATK[ai] === 2) return "qi";              // 气系被挡 → 防护罩
+    return "";
+  }
+
+  /* ------------------------------------------------------------- 音效
+     全部用 Web Audio 现场合成（不加载任何音频文件、不进 assets、不增加体积）：
+       blade       刀系出招：高频"唰"
+       qi          气系出招：低频"呼"
+       gather      积攒资源：轻快的小提示音
+       blockShield 刀系被挡：金属"叮"
+       blockQi     气系被挡：闷响
+       blockHoly   圣盾阵挡下：明亮和弦"铛～"
+     音量刻意压得很低（master 0.22），并且可以在设置里整体关掉。
+  ------------------------------------------------------------- */
+  let AC = null, NOISE = null;
+  function audioCtx() {
+    if (AC) return AC;
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    try { AC = new Ctor(); } catch (e) { AC = null; }
+    return AC;
+  }
+  function sfxEnabled() { return S.settings.sfx !== false; }
+  /** 喇叭图标：开着是声波，关掉是带斜杠 */
+  function speakerSvg(on) {
+    return `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z" fill="currentColor"/>
+      ${on
+        ? `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+             <path d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path d="M18.2 6.6a7.6 7.6 0 0 1 0 10.8"/>
+           </g>`
+        : `<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+             <path d="M15.5 9.5l5 5"/><path d="M20.5 9.5l-5 5"/>
+           </g>`}
+    </svg>`;
+  }
+  function noiseBuffer(ctx) {
+    if (NOISE) return NOISE;
+    const n = Math.floor(ctx.sampleRate * 0.5);
+    NOISE = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = NOISE.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    return NOISE;
+  }
+  function toneTo(ctx, dest, o) {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = o.type || "sine";
+    osc.frequency.setValueAtTime(o.f0, o.t0);
+    if (o.f1) osc.frequency.exponentialRampToValueAtTime(Math.max(30, o.f1), o.t0 + o.dur);
+    g.gain.setValueAtTime(0.0001, o.t0);
+    g.gain.exponentialRampToValueAtTime(o.vol, o.t0 + (o.attack || 0.008));
+    g.gain.exponentialRampToValueAtTime(0.0001, o.t0 + o.dur);
+    osc.connect(g); g.connect(dest);
+    osc.start(o.t0); osc.stop(o.t0 + o.dur + 0.03);
+  }
+  function noiseTo(ctx, dest, o) {
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuffer(ctx);
+    const f = ctx.createBiquadFilter();
+    f.type = o.filter || "highpass";
+    f.frequency.setValueAtTime(o.cut, o.t0);
+    if (o.cut1) f.frequency.exponentialRampToValueAtTime(Math.max(60, o.cut1), o.t0 + o.dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, o.t0);
+    g.gain.exponentialRampToValueAtTime(o.vol, o.t0 + (o.attack || 0.006));
+    g.gain.exponentialRampToValueAtTime(0.0001, o.t0 + o.dur);
+    src.connect(f); f.connect(g); g.connect(dest);
+    src.start(o.t0); src.stop(o.t0 + o.dur + 0.03);
+  }
+  function sfxVolume() {
+    const v = S.settings.vol;
+    return typeof v === "number" ? Math.max(0, Math.min(1, v)) : 0.7;
+  }
+  function sfx(name, gainScale) {
+    S.sfxLog.push(name);
+    if (S.sfxLog.length > 30) S.sfxLog.shift();
+    if (!sfxEnabled()) return;
+    const ctx = audioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended" && ctx.resume) { try { ctx.resume(); } catch (e) { /* ignore */ } }
+    const t0 = ctx.currentTime;
+    const out = ctx.createGain();
+    out.gain.value = 0.22 * sfxVolume() * (gainScale == null ? 1 : gainScale);   // 压低 + 跟随玩家音量
+    out.connect(ctx.destination);
+    if (name === "click") {
+      // 界面按钮：非常轻的一声"哒"，只做存在感提示
+      noiseTo(ctx, out, { t0, dur: 0.045, vol: 0.3, filter: "bandpass", cut: 1900, cut1: 1200 });
+      toneTo(ctx, out, { t0, dur: 0.045, vol: 0.16, f0: 640, f1: 520, type: "sine" });
+    } else if (name === "blade") {
+      noiseTo(ctx, out, { t0, dur: 0.15, vol: 0.5, filter: "highpass", cut: 2600, cut1: 700 });
+      toneTo(ctx, out, { t0, dur: 0.13, vol: 0.22, f0: 900, f1: 280, type: "triangle" });
+    } else if (name === "qi") {
+      toneTo(ctx, out, { t0, dur: 0.3, vol: 0.3, f0: 230, f1: 90, type: "sine" });
+      noiseTo(ctx, out, { t0, dur: 0.3, vol: 0.22, filter: "lowpass", cut: 1100, cut1: 320 });
+    } else if (name === "gather") {
+      toneTo(ctx, out, { t0, dur: 0.11, vol: 0.18, f0: 660, f1: 990, type: "sine" });
+    } else if (name === "blockShield") {
+      toneTo(ctx, out, { t0, dur: 0.22, vol: 0.3, f0: 1750, f1: 1600, type: "triangle" });
+      toneTo(ctx, out, { t0: t0 + 0.004, dur: 0.18, vol: 0.16, f0: 2360, f1: 2200, type: "triangle" });
+    } else if (name === "blockQi") {
+      toneTo(ctx, out, { t0, dur: 0.22, vol: 0.28, f0: 300, f1: 150, type: "sine" });
+      noiseTo(ctx, out, { t0, dur: 0.18, vol: 0.2, filter: "lowpass", cut: 700, cut1: 260 });
+    } else if (name === "blockHoly") {
+      [880, 1320, 1760].forEach((f, i) => {
+        toneTo(ctx, out, { t0: t0 + i * 0.01, dur: 0.45, vol: 0.15, f0: f, f1: f * 0.98, type: "triangle" });
+      });
+      noiseTo(ctx, out, { t0, dur: 0.4, vol: 0.12, filter: "lowpass", cut: 4200, cut1: 1200 });
+    }
+  }
 
   function cropMetrics() {
     const c = S.crop;
@@ -1732,6 +1921,33 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (B.DEF_B[i]) d.push("挡刀系");
     if (B.DEF_Q[i]) d.push("挡气系");
     return d.join(" · ");
+  }
+  /** 格挡特效：刀系被挡 → 盾；气系被挡 → 青蓝防护罩；圣盾阵 → 圣光。都做得很淡。 */
+  function blockFxHtml(kind) {
+    if (kind === "shield") {
+      return `<span class="blockfx shield" aria-hidden="true"><svg viewBox="0 0 64 74">
+        <path d="M32 5 L57 15 V37 C57 52 45 63 32 68 C19 63 7 52 7 37 V15 Z"
+              fill="rgba(255,255,255,.10)" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M22 37 l7 7 13 -15" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
+      </svg></span>`;
+    }
+    if (kind === "qi") {
+      return `<span class="blockfx qi" aria-hidden="true"><svg viewBox="0 0 76 76">
+        <circle cx="38" cy="38" r="30" fill="rgba(0,165,200,.16)" stroke="currentColor" stroke-width="4"/>
+        <circle cx="38" cy="38" r="20" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".55"/>
+        <path d="M14 46 q10 -9 20 0 t24 0" fill="none" stroke="currentColor" stroke-width="3" opacity=".6" stroke-linecap="round"/>
+      </svg></span>`;
+    }
+    if (kind === "holy") {
+      return `<span class="blockfx holy" aria-hidden="true"><svg viewBox="0 0 84 84">
+        <circle cx="42" cy="42" r="30" fill="rgba(255,212,0,.16)" stroke="currentColor" stroke-width="3.5"/>
+        <circle cx="42" cy="42" r="20" fill="rgba(255,255,255,.18)"/>
+        <g stroke="currentColor" stroke-width="3.5" stroke-linecap="round" opacity=".8">
+          <path d="M42 4 V14"/><path d="M42 70 V80"/><path d="M4 42 H14"/><path d="M70 42 H80"/>
+        </g>
+      </svg></span>`;
+    }
+    return "";
   }
   /** 动作效果（结构化，带颜色）——对战按钮用这份 */
   function fxChip(id) {
@@ -1935,7 +2151,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       </div>
 
       <footer class="foot">
-        波波攒 V 0.1 测试版 | 作者：B站@${extLink(AUTHOR_NAME, AUTHOR_URL, true)}<br>
+        波波攒 V 0.1 测试版 | 作者：B站${extLink("@" + AUTHOR_NAME, AUTHOR_URL, true)}<br>
         本作遵循 CC BY-NC-SA 4.0 协议
       </footer>
     </div>`;
@@ -2079,11 +2295,19 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     }
     return `<div class="hp">${cells}</div>`;
   }
-  function resRow(side) {
+  /** 资源格：本回合有变化的格子做「旧数字滑出 / 新数字滑入」，满 5 个时数字变红（底色不变） */
+  function resRow(side, idx) {
+    const before = (S.fx && S.fx.before && S.fx.before[idx]) ? S.fx.before[idx] : null;
     return `<div class="res">${[0, 1, 2, 3].map((r) => {
       const n = side.res[r];
+      const prev = before ? before[r] : null;
+      const changed = before && prev !== n && prev != null;
+      const up = changed && n > prev;
       return `<div class="chip${n >= B.MAX_RES ? " full" : ""}">
-        <b>${fmt(n)}</b><span class="lab">${esc(resLabel(r))}</span>
+        ${changed
+          ? `<span class="numwrap ${up ? "up" : "down"}"><b class="old">${fmt(prev)}</b><b class="new">${fmt(n)}</b></span>`
+          : `<b>${fmt(n)}</b>`}
+        <span class="lab">${esc(resLabel(r))}</span>
       </div>`;
     }).join("")}</div>`;
   }
@@ -2120,7 +2344,12 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
         ? (side.serious ? "Boss · 认真形态" : "Boss · 通常形态")
         : esc(side.subtitle || (side.kind === "veteran" ? "历战难度" : "普通难度"));
     const flashing = (!isMe && S.nameAnim && S.nameAnim.name === side.name && Date.now() < S.nameAnim.until) ? " flash" : "";
-    return `<section class="side ${isMe ? "me" : "enemy"}${flashing}">
+    // 受击震动：按伤害分 4 档，轻伤只抖一下，重伤抖得更明显（不遮挡血条信息）
+    const hit = (S.fx && S.fx.hit) ? (S.fx.hit[idx] || 0) : 0;
+    const tier = hit <= 0 ? 0 : hit <= 1 ? 1 : hit <= 2 ? 2 : hit <= 3 ? 3 : 4;
+    const hurt = tier ? ` hit hit-${tier}` : "";
+    return `<section class="side ${isMe ? "me" : "enemy"}${flashing}${hurt}">
+      ${(S.fx && S.fx.block && S.fx.block[idx]) ? blockFxHtml(S.fx.block[idx]) : ""}
       <div class="sidehead">
         ${avatarBox(side)}
         <div><h3 class="boss-name${fading}">${esc(side.name)}</h3><div class="sub">${sub}</div></div>
@@ -2128,7 +2357,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       </div>
       ${hpBar(side)}
       <div class="hpline"><span class="hpnum">${fmt(Math.max(0, side.hp))}/${maxHp}</span><span class="muted">体力</span></div>
-      ${resRow(side)}
+      ${resRow(side, idx)}
       ${tail}
     </section>`;
   }
@@ -2440,7 +2669,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
         <div class="body">
           <div class="switch-row">
             <div><div class="t">玩家头像</div><div class="d">选一张本地图片当头像，只存在你这台设备上（不会上传）</div></div>
-            <div class="row">
+            <div class="row btns">
               <button class="ghost" data-act="pickAvatar">${S.avatar ? "更换" : "上传"}</button>
               ${S.avatar ? `<button class="ghost" data-act="removeAvatar">移除</button>` : ""}
             </div>
@@ -2454,20 +2683,22 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
             <button class="tgl" data-act="settheme:${dark ? "light" : "dark"}" aria-pressed="${dark}" aria-label="切换白天 / 夜间模式"></button>
           </div>
           <div class="switch-row">
-            <div><div class="t">出手节奏</div><div class="d">下一局生效，也可以在战前设置</div></div>
-            <div class="seg" role="group" aria-label="出手节奏">
-              <button data-act="pace:normal" aria-pressed="${!rt}">通常</button>
-              <button data-act="pace:realtime" aria-pressed="${rt}">拟真</button>
-            </div>
-          </div>
-          <div class="switch-row">
             <div><div class="t">AI 训练数据</div><div class="d">看看这些对手是怎么练出来的（含作者留言）</div></div>
             <button class="ghost" data-act="openTraining">打开</button>
+          </div>
+          <div class="switch-row">
+            <div><div class="t">音效</div><div class="d" id="volLabel">${sfxEnabled() ? "当前音量：" + Math.round(sfxVolume() * 100) + "%" : "已关闭"}</div></div>
+            <div class="volwrap">
+              <button class="spk" data-act="sfx:toggle" aria-pressed="${sfxEnabled()}"
+                      aria-label="${sfxEnabled() ? "关闭音效" : "开启音效"}" title="点击开关音效">${speakerSvg(sfxEnabled())}</button>
+              <input type="range" id="volRange" min="0" max="100" step="5" value="${Math.round(sfxVolume() * 100)}"
+                     aria-label="音效音量" ${sfxEnabled() ? "" : "disabled"}>
+            </div>
           </div>
           <div class="switch-row" style="display:block">
             <div class="t">声明</div>
             <div class="declare">
-              <p>作者：B站@${extLink(AUTHOR_NAME, AUTHOR_URL, true)}</p>
+              <p>作者：B站${extLink("@" + AUTHOR_NAME, AUTHOR_URL, true)}</p>
               <p>本作绝无针对任何包括但不限于有机物和无机物在内的物质的恶意讽刺与攻击意图。如您感到不适，请不要打我（抱头）。</p>
               <p>部分立绘来源于：B站@${extLink(ARTIST_NAME, ARTIST_URL)}</p>
             </div>
@@ -2553,6 +2784,8 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
         : S.modal === "quit" ? modalQuit()
           : S.modal === "crop" ? modalCrop() : "";
     if (S.modal === "crop") wireCrop();      // 必须等裁剪弹窗的 DOM 建好之后再接拖动 / 缩放
+    if (S.modal === "settings") wireSettings();
+    S.fx = null;                             // 特效只在紧接着的那一次渲染里播一遍
   }
 
   /* --------------------------------------------------------- 流程控制 */
@@ -2621,6 +2854,19 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   }
 
   /** 技能说明浮层：手机端点一下开/关，网页端靠 CSS 悬停 */
+  /** 设置里的音量条：拖动即时生效并存本地，松手时播一声让你听效果 */
+  function wireSettings() {
+    const range = document.getElementById("volRange");
+    const label = document.getElementById("volLabel");
+    if (!range) return;
+    range.addEventListener("input", () => {
+      S.settings.vol = Number(range.value) / 100;
+      if (label) label.textContent = "当前音量：" + Math.round(S.settings.vol * 100) + "%";
+      saveSettings();
+    });
+    range.addEventListener("change", () => sfx("click", 1.4));
+  }
+
   function toggleSkillTip(el) {
     const wasOpen = el.classList.contains("open");
     document.querySelectorAll(".skills li.open").forEach((x) => x.classList.remove("open"));
@@ -2632,6 +2878,26 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (!S.battle || S.battle.finished) return;   // 已结束的对局忽略输入
     const rec = B.playTurn(S.battle, id);
     S.lastRecord = rec;
+    // 记录这一回合的变化，供资源数字动画 / 受击震动使用（渲染一次后清掉，避免重复播放）
+    S.fx = {
+      before: [
+        (rec && rec.resBefore && rec.resBefore[0]) ? rec.resBefore[0].slice() : null,
+        (rec && rec.resBefore && rec.resBefore[1]) ? rec.resBefore[1].slice() : null,
+      ],
+      hit: [(rec && rec.dmg && rec.dmg[0]) || 0, (rec && rec.dmg && rec.dmg[1]) || 0],
+      block: [blockKindFor(rec, 0), blockKindFor(rec, 1)],   // 谁用防御挡住了攻击（圣盾阵/刀/气）
+    };
+    // 音效：先放玩家自己的出招，再放"被挡住"的反馈（每回合最多两个音）
+    const myAct = rec && rec.actions ? rec.actions[0] : null;
+    const myIdx = myAct != null ? B.ACT[myAct] : -1;
+    if (myIdx >= 0) {
+      if (B.ATK[myIdx] === 1) sfx("blade");
+      else if (B.ATK[myIdx] === 2) sfx("qi");
+      else if (B.GAIN[myIdx][0] || B.GAIN[myIdx][1] || B.GAIN[myIdx][2] || B.GAIN[myIdx][3]) sfx("gather");
+    }
+    const myBlock = S.fx.block[0], foeBlock = S.fx.block[1];
+    const kind = myBlock || foeBlock;
+    if (kind) sfx(kind === "shield" ? "blockShield" : kind === "qi" ? "blockQi" : "blockHoly");
     // Boss 改名特效（星体咏唱推进阶段）：只做名字渐变扫光，不再弹全屏卡片挡操作
     if (rec && S.battle.phaseEvent) {
       const ev = S.battle.phaseEvent;
@@ -2679,6 +2945,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); return; }
     if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); S.modal = "settings"; render(); return; }
     if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); S.modal = "settings"; render(); return; }
+    if (act === "sfx:toggle") { S.settings.sfx = !sfxEnabled(); saveSettings(); S.modal = "settings"; render(); return; }
     if (act === "pickAvatar") { pickAvatar(); return; }
     if (act === "removeAvatar") { clearAvatar(); return; }
     if (act === "skilltip") { toggleSkillTip(el); return; }
@@ -2733,6 +3000,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     else if (act === "cropCancel") { cancelCrop(); }
     else if (act.startsWith("setres:")) { S.settings.res = act.slice(7); saveSettings(); render(); }
     else if (act.startsWith("settheme:")) { S.settings.theme = act.slice(9); saveSettings(); render(); }
+    else if (act === "sfx:toggle") { S.settings.sfx = !sfxEnabled(); saveSettings(); render(); }
     else if (act.startsWith("pace:")) { S.setup.pace = act.slice(5); saveSettings(); render(); }
   });
 
@@ -2741,6 +3009,16 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (e.target && e.target.closest && e.target.closest(".skills li")) return;
     document.querySelectorAll(".skills li.open").forEach((x) => x.classList.remove("open"));
   }, true);
+
+  // 界面点击音：所有带 data-act 的按钮都来一声很轻的"哒"（战斗出招除外，那边有自己的招式音）
+  document.addEventListener("click", (e) => {
+    const el = e.target && e.target.closest ? e.target.closest("[data-act]") : null;
+    if (!el) return;
+    const act = el.getAttribute("data-act") || "";
+    if (act.indexOf("play:") === 0) return;          // 出招音由 doPlay 播
+    if (el.hasAttribute("disabled")) return;
+    sfx("click", 0.55);
+  });
 
   document.addEventListener("keydown", (e) => {
     if (S.screen !== "battle" || !S.battle || S.battle.finished) return;
@@ -2759,12 +3037,20 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   loadAvatar();
   applyTheme();
   render();
+  // 浏览器要求音频必须由用户操作唤起：第一次点屏幕时把 AudioContext 唤醒
+  document.addEventListener("pointerdown", () => {
+    const c = audioCtx();
+    if (c && c.state === "suspended" && c.resume) { try { c.resume(); } catch (e) { /* ignore */ } }
+  }, { once: true });
 
   // 调试 / 自动化测试钩子（不参与游戏逻辑）
   window.BOBO_DEBUG = {
     get state() { return S; },
     play: (id) => doPlay(id),
     render: () => render(),
+    sfx: (n) => sfx(n),
+    sfxLog: () => S.sfxLog.slice(),
+    blockKindFor: (rec, idx) => blockKindFor(rec, idx),
   };
 })();
 
