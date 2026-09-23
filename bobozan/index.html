@@ -659,8 +659,8 @@ body.shake #app{animation:shake .5s ease}
   defAction("auraBlade", { cost: [1, 1, 0, 0], dmg: 1, atk: 3 });
   defAction("guardSword", { cost: [1, 0, 1, 0], dmg: 1.5, atk: 1, db: true });
   defAction("vacuumWave", { cost: [0, 1, 0, 1], dmg: 1.5, atk: 2, dq: true });
-  defAction("dragon", { cost: [2, 2, 2, 2], dmg: 4, atk: 3 });
-  defAction("apocalypse", { cost: [3, 3, 3, 3], dmg: 5, atk: 4 });
+  defAction("dragon", { cost: [3, 3, 3, 3], dmg: 3, atk: 3 });
+  defAction("apocalypse", { cost: [5, 5, 5, 5], dmg: 5, atk: 4 });
   defAction("bossStrike", { cost: [1, 1, 0, 0], dmg: 2.5, atk: 3, hpCost: 1 });
   // 重置卡：空过一个回合 + 回满血，它不是防御动作
   defAction("bossReset", {});
@@ -813,7 +813,7 @@ body.shake #app{animation:shake .5s ease}
       s[a] -= 3 * COST_TOTAL[a] + 5 * (COST[a][2] + COST[a][3]);
     }
     ["gatherA", "gatherB", "gatherC", "gatherD"].forEach((id, r) => {
-      const nd = Math.max(0, 2 - me[r]), na = Math.max(0, 3 - me[r]);
+      const nd = Math.max(0, 3 - me[r]), na = Math.max(0, 5 - me[r]);   // 降龙 3 / 毁天灭地 5
       if (nd === 1 || na === 1) s[ACT[id]] += 20;
     });
     ["gatherA", "gatherB", "gatherC", "gatherD"].forEach((id, r) => { s[ACT[id]] += S_RES_PREF[strat][r]; });
@@ -1326,7 +1326,12 @@ body.shake #app{animation:shake .5s ease}
         enemy.used.correction = (enemy.used.correction || 0) + 1;
         notes.push("【对不起，是我算错了…】触发：Boss 把本回合出招改为「" +
           ACTION_CN[ACTION_IDS[corr]] + "」");
-        enemy.skillUsed = Object.assign(enemy.skillUsed || {}, { "对不起，是我算错了…": true });
+        // 两次都用完时补一句：她再也耍不了赖了
+        if (enemy.used.correction >= DOUBAO_CORRECTIONS) {
+          notes.push("豆包怕愤怒的用户过去拔她网线，她无法再耍赖了。");
+        }
+        // 记「已用次数」而不是 true：这个技能一场有 2 次，UI 要等两次都用完才划掉
+        enemy.skillUsed = Object.assign(enemy.skillUsed || {}, { "对不起，是我算错了…": enemy.used.correction });
       }
     }
 
@@ -1353,7 +1358,7 @@ body.shake #app{animation:shake .5s ease}
       enemy.avail.bossStrike = 0;
       enemy.used.bossStrike = 1;
       enemy.skillUsed = Object.assign(enemy.skillUsed || {}, { "豆馅打击": true });
-      notes.push("【豆馅打击】触发：豆包掏出豆馅糊你一脸，强化了攻击。本次攻击造成 2.5 点伤害（只有圣盾阵能挡）。");
+    notes.push("【豆馅打击】触发：豆包掏出豆馅糊你一脸，强化了攻击。本次攻击造成 2.5 点伤害（只有「圣盾阵」可以抵挡豆馅）。");
     }
 
     // 写回状态
@@ -1455,6 +1460,7 @@ body.shake #app{animation:shake .5s ease}
     COST, GAIN, DMG, ATK, DEF_B, DEF_Q, DEF_ALL, HP_COST, NF, NSTATIC, NDYN,
     FEATURE_NAMES, STATIC_FEATURES, DYNAMIC_FEATURES, STATIC,
     MAX_HP, MAX_RES, TURN_LIMIT, STRATEGY_IDS, BOSSES, BOSS_MODES, BOSS_LIST, BOSS_SERIOUS_READY,
+    DOUBAO_CORRECTIONS,
     RULES,
     STAR_PHASES: STAR_PHASE_KEYS, STAR_PHASE_NAMES, STAR_PERIOD, RESET_CARD_DELAY, STAR_BLAST_DAMAGE,
     featuresFor, policyScores, normalBotScores, legalMask, legalFor, blocked, sideCtx, baseLegalFor,
@@ -1885,7 +1891,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
     if (gains.length) bits.push(gains.join(" "));
     if (B.DEF_B[i]) bits.push("挡刀系");
     if (B.DEF_Q[i]) bits.push("挡气系");
-    if (B.DEF_ALL[i] && id !== "bossReset") bits.push("挡下一切攻击");
+    if (B.DEF_ALL[i] && id !== "bossReset") bits.push("除特殊说明，防御一切攻击");
     if (B.DMG[i] > 0) {
       const t = B.ATK[i];
       const type = t === 1 ? "刀系" : t === 2 ? "气系" : t === 3 ? "特殊" : "无法防御";
@@ -1916,7 +1922,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   }
   function defText(id) {
     const i = B.ACT[id];
-    if (B.DEF_ALL[i] && id !== "bossReset") return "挡下一切攻击";
+    if (B.DEF_ALL[i] && id !== "bossReset") return "除特殊说明，防御一切攻击";
     const d = [];
     if (B.DEF_B[i]) d.push("挡刀系");
     if (B.DEF_Q[i]) d.push("挡气系");
@@ -1975,7 +1981,11 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   /** Boss 技能名列表：带说明浮层，网页端悬停显示、手机端点一下显示；星体咏唱有专属星空底 */
   function skillList(names, usedMap, style) {
     return `<ul class="skills"${style ? ` style="${style}"` : ""}>${names.map((n) => {
-      const u = !!(usedMap && usedMap[n]);
+      // 有的技能一场能用多次（例如豆包的「我算错了」2 次）：要用完才在 UI 里划掉
+      const maxUse = (n === "对不起，是我算错了…") ? (B.DOUBAO_CORRECTIONS || 2) : 1;
+      const raw = usedMap ? usedMap[n] : 0;
+      const used = raw === true ? 1 : (raw || 0);
+      const u = used >= maxUse;
       const desc = SKILL_DESC[n];
       return `<li class="${u ? "used" : ""}" data-act="skilltip"${desc ? ' data-has-tip="1"' : ""}>`
         + `<span class="sk-name">${esc(n)}</span>`
@@ -2126,11 +2136,14 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   }
 
   function screenHome() {
+    const buildLabel = (B.WEIGHTS && B.WEIGHTS.label) || "";
     return `<div class="screen">
       ${topbar({
       title: "波波<em>攒</em>",
       right: `${avatarChip()}<button class="ghost" data-act="help">玩法说明</button>`,
     })}
+      ${buildLabel ? `<div class="row" style="margin:-6px 0 14px">
+        <span class="tag" style="background:#e2001a;color:#fff"><i>${esc(buildLabel)}</i></span></div>` : ""}
       <div class="modes">
         <button class="mode" data-act="setup:normal">
           <h3>普通模式</h3>
@@ -2151,6 +2164,7 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
       </div>
 
       <footer class="foot">
+        ${(B.WEIGHTS && B.WEIGHTS.label) ? esc(B.WEIGHTS.label) + " · 仅供对比<br>" : ""}
         波波攒 V 0.1 测试版 | 作者：B站${extLink("@" + AUTHOR_NAME, AUTHOR_URL, true)}<br>
         本作遵循 CC BY-NC-SA 4.0 协议
       </footer>
@@ -2158,6 +2172,15 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
   }
 
   /** 首页出招表：动作 / 消耗 / 效果。数据直接读引擎，以后改数值这里自动同步 */
+  /** 玩法说明里的动作表行（也全部读引擎，数值补丁后不用手改文案） */
+  function actionRows(groupKey, cols) {
+    const g = (B.ACTION_GROUPS || []).find((x) => x.key === groupKey);
+    if (!g) return "";
+    return g.ids.map((id) => (cols === 2
+      ? `<tr><td>${esc(B.ACTION_CN[id])}</td><td>${fxText(id)}</td></tr>`
+      : `<tr><td>${esc(B.ACTION_CN[id])}</td><td>${esc(costText(id) || "免费")}</td><td>${fxText(id)}</td></tr>`)).join("");
+  }
+
   function moveTable() {
     const groups = B.ACTION_GROUPS.map((g) => `
       <div class="mt-group">
@@ -2612,29 +2635,12 @@ window.BOBO_WEIGHTS = {"veteran":{"W":[[-0.23765,0.09682,-0.15005,0.24203,-0.130
           <h4>一、基本流程</h4>
           <p>1V1 对战。每个回合双方<b>同时</b>选择 1 个动作，然后统一结算：先同时扣除 / 获得资源，再同时判定伤害。体力上限 5，被打空即失败；<b>同一回合双方同时归零算平局</b>。</p>
           <h4>二、积攒类动作</h4>
-          <table><tr><th>动作</th><th>效果</th></tr>
-            <tr><td>锻铁</td><td>获得 1 个钢铁（A）</td></tr>
-            <tr><td>攒气</td><td>获得 1 个聚气（B）</td></tr>
-            <tr><td>架盾</td><td>获得 1 个盾（C），本回合抵挡一切刀系攻击</td></tr>
-            <tr><td>屏障</td><td>获得 1 个屏（D），本回合抵挡一切气系攻击</td></tr>
-          </table>
+          <table><tr><th>动作</th><th>效果</th></tr>${actionRows("gather", 2)}</table>
           <p>每种资源最多 5 个，资源对敌人可见。</p>
           <h4>三、基础攻击类动作</h4>
-          <table><tr><th>动作</th><th>消耗</th><th>效果</th></tr>
-            <tr><td>小刀</td><td>1A</td><td>刀系，1 伤害</td></tr>
-            <tr><td>能量波</td><td>1B</td><td>气系，1 伤害</td></tr>
-            <tr><td>长刀</td><td>2A</td><td>刀系，2 伤害</td></tr>
-            <tr><td>冲击波</td><td>2B</td><td>气系，2 伤害</td></tr>
-          </table>
+          <table><tr><th>动作</th><th>消耗</th><th>效果</th></tr>${actionRows("basic", 3)}</table>
           <h4>四、组合进阶类动作</h4>
-          <table><tr><th>动作</th><th>消耗</th><th>效果</th></tr>
-            <tr><td>圣盾阵</td><td>1C+1D</td><td>本回合挡下一切攻击（毁天灭地除外）</td></tr>
-            <tr><td>气刃斩</td><td>1A+1B</td><td>只能被圣盾阵防御，1 伤害</td></tr>
-            <tr><td>卫护剑</td><td>1A+1C</td><td>视同架盾，同时打出 1.5 伤害的刀系攻击</td></tr>
-            <tr><td>真空波</td><td>1B+1D</td><td>视同屏障，同时打出 1.5 伤害的气系攻击</td></tr>
-            <tr><td>降龙十八掌</td><td>2A+2B+2C+2D</td><td>只能被圣盾阵防御，4 伤害</td></tr>
-            <tr><td>毁天灭地</td><td>3A+3B+3C+3D</td><td>无法被任何手段防御，5 伤害</td></tr>
-          </table>
+          <table><tr><th>动作</th><th>消耗</th><th>效果</th></tr>${actionRows("combo", 3)}</table>
           <h4>五、防御关系速查</h4>
           <ul>
             <li>刀系（小刀 / 长刀 / 卫护剑）：被 架盾、卫护剑、圣盾阵 挡下</li>
